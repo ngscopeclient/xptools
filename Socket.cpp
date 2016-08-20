@@ -33,6 +33,7 @@
  */
 
 #include "Socket.h"
+#include "../log/log.h"
 #include <memory.h>
 
 using namespace std;
