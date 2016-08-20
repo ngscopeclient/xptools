@@ -192,7 +192,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 		//Close the socket so destructor code won't try to send stuff to us
 		Close();
 		
-		LogWarning(JtagExceptionWrapper("Failed to connect to %s\n", host.c_str());
+		LogWarning("Failed to connect to %s\n", host.c_str());
 		return false;
 	}
 	
