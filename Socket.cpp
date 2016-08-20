@@ -157,12 +157,12 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 
 	if(0 != (getaddrinfo(host.c_str(), sport, &hints, &address)))
 	{
-		LogWarning(JtagExceptionWrapper("DNS lookup for %s failed\n", host.c_str());
+		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
 	}
 	if(address==NULL)
 	{
-		LogWarning(JtagExceptionWrapper("DNS lookup for %s failed\n", host.c_str());
+		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
 	}
 	
