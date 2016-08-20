@@ -355,6 +355,8 @@ bool Socket::Bind(unsigned short port)
 		LogError("Unable to bind socket\n");
 		return false;
 	}
+	
+	return true;
 }
 
 /**
