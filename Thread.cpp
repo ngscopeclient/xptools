@@ -34,6 +34,7 @@
  */
 
 #include "Thread.h"
+#include "../log/log.h"
 
 #include <string>
 using namespace std;
