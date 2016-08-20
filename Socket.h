@@ -67,33 +67,33 @@ public:
 	Socket(ZSOCKET sock, int af=PF_INET);
 
 	//Destructor
-	~Socket(void);
+	virtual ~Socket(void);
 
 	//Connect to a host (automatic DNS resolution)
-	bool Connect(const std::string& host, uint16_t port);
+	virtual bool Connect(const std::string& host, uint16_t port);
 
 	//Bind to a port (any available interface)
-	bool Bind(unsigned short port);
+	virtual bool Bind(unsigned short port);
 
 	//Put us in listening mode
-	bool Listen();
+	virtual bool Listen();
 
 	//Accept a new connection
-	Socket Accept(sockaddr_in* addr,ZSOCKLEN len);
-	Socket Accept(sockaddr_in6* addr,ZSOCKLEN len);
-	Socket Accept();
+	virtual Socket Accept(sockaddr_in* addr,ZSOCKLEN len);
+	virtual Socket Accept(sockaddr_in6* addr,ZSOCKLEN len);
+	virtual Socket Accept();
 
 	//Disconnect us from the socket object
-	ZSOCKET Detach();
+	virtual ZSOCKET Detach();
 
 	//Send / receive rawdata
-	bool SendLooped(const unsigned char* buf, int count);
-	bool RecvLooped(unsigned char* buf, int len);
+	virtual bool SendLooped(const unsigned char* buf, int count);
+	virtual bool RecvLooped(unsigned char* buf, int len);
 	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	
 	//Send/receive a string
-	void RecvPascalString(std::string& str);
+	virtual void RecvPascalString(std::string& str);
 
 	/**
 		@brief Convert us to the native OS socket type
@@ -112,8 +112,8 @@ public:
 	}
 
 protected:
-	void Close();
-	void Open();
+	virtual void Close();
+	virtual void Open();
 
 	/**
 		@brief Address family of this socket (typically AF_INET or AF_INET6)
