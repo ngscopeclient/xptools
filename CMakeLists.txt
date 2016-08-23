@@ -1,3 +1,2 @@
 add_library(xptools STATIC 
-	Socket.cpp
-	Thread.cpp)
+	Socket.cpp)
