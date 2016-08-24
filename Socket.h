@@ -93,7 +93,8 @@ public:
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	
 	//Send/receive a string
-	virtual void RecvPascalString(std::string& str);
+	virtual bool RecvPascalString(std::string& str);
+	virtual bool SendPascalString(std::string& str);
 
 	/**
 		@brief Convert us to the native OS socket type

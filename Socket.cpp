@@ -467,16 +467,45 @@ ZSOCKET Socket::Detach()
 }
 
 /**
-	@brief Reads a Pascal-style string from a socket
+	@brief Sends a string to a socket
+
+	@param fd		Socket handle
+	@param str		String to send
+	
+	@return true on success, false on fail
  */
-void Socket::RecvPascalString(string& str)
+bool Socket::SendPascalString(std::string& str)
+{
+	if(str.length() > 65535)
+	{
+		LogError("SendPascalString() requires input <64 KB");
+		return false;
+	}
+		
+	uint16_t len = str.length();
+	if(!SendLooped((unsigned char*)&len, 2));
+		return false;
+	if(!SendLooped((unsigned char*)str.c_str(), len))
+		return false;
+		
+	return true;
+}
+
+/**
+	@brief Reads a Pascal-style string from a socket
+	
+	@return true on success, false on fail
+ */
+bool Socket::RecvPascalString(string& str)
 {
 	uint16_t len;
 	RecvLooped((unsigned char*)&len, 2);
 	int32_t tlen = len + 1;		//use larger int to avoid risk of overflow if str len == 65535
 	char* rbuf = new char[tlen];
-	RecvLooped((unsigned char*)rbuf, len);
+	bool err = RecvLooped((unsigned char*)rbuf, len);
 	rbuf[len] = 0;				//recv string is not null terminated
 	str = rbuf;
 	delete[] rbuf;
+	
+	return err;
 }
