@@ -483,7 +483,7 @@ bool Socket::SendPascalString(std::string& str)
 	}
 		
 	uint16_t len = str.length();
-	if(!SendLooped((unsigned char*)&len, 2));
+	if(!SendLooped((unsigned char*)&len, 2))
 		return false;
 	if(!SendLooped((unsigned char*)str.c_str(), len))
 		return false;
