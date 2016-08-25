@@ -94,7 +94,7 @@ public:
 	
 	//Send/receive a string
 	virtual bool RecvPascalString(std::string& str);
-	virtual bool SendPascalString(std::string& str);
+	virtual bool SendPascalString(const std::string& str);
 
 	/**
 		@brief Convert us to the native OS socket type

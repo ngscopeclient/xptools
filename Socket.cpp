@@ -474,7 +474,7 @@ ZSOCKET Socket::Detach()
 	
 	@return true on success, false on fail
  */
-bool Socket::SendPascalString(std::string& str)
+bool Socket::SendPascalString(const std::string& str)
 {
 	if(str.length() > 65535)
 	{
