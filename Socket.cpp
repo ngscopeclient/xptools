@@ -227,7 +227,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 	}
 	else if(x == 0)
 	{
-		LogWarning("Socket closed unexpectedly\n");
+		//LogWarning("Socket closed unexpectedly\n");
 		return false;
 	}
 	
@@ -305,7 +305,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	}
 	else if(x == 0)
 	{
-		LogWarning("Socket closed unexpectedly\n");
+		//LogWarning("Socket closed unexpectedly\n");
 		return false;
 	}
 	
