@@ -499,7 +499,8 @@ bool Socket::SendPascalString(const std::string& str)
 bool Socket::RecvPascalString(string& str)
 {
 	uint32_t len;
-	RecvLooped((unsigned char*)&len, 4);
+	if(!RecvLooped((unsigned char*)&len, 4))
+		return false;
 	int64_t tlen = static_cast<int64_t>(len) + 1;	//use larger int to avoid risk of overflow if str len == 4GB
 	char* rbuf = new char[tlen];
 	bool err = RecvLooped((unsigned char*)rbuf, len);
