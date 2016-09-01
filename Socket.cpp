@@ -476,14 +476,14 @@ ZSOCKET Socket::Detach()
  */
 bool Socket::SendPascalString(const std::string& str)
 {
-	if(str.length() > 65535)
+	if(str.length() > 0xFFFFFFFF)
 	{
-		LogError("SendPascalString() requires input <64 KB");
+		LogError("SendPascalString() requires input <4 GB");
 		return false;
 	}
 		
-	uint16_t len = str.length();
-	if(!SendLooped((unsigned char*)&len, 2))
+	uint32_t len = str.length();
+	if(!SendLooped((unsigned char*)&len, 4))
 		return false;
 	if(!SendLooped((unsigned char*)str.c_str(), len))
 		return false;
@@ -498,9 +498,9 @@ bool Socket::SendPascalString(const std::string& str)
  */
 bool Socket::RecvPascalString(string& str)
 {
-	uint16_t len;
-	RecvLooped((unsigned char*)&len, 2);
-	int32_t tlen = len + 1;		//use larger int to avoid risk of overflow if str len == 65535
+	uint32_t len;
+	RecvLooped((unsigned char*)&len, 4);
+	int64_t tlen = static_cast<int64_t>(len) + 1;	//use larger int to avoid risk of overflow if str len == 4GB
 	char* rbuf = new char[tlen];
 	bool err = RecvLooped((unsigned char*)rbuf, len);
 	rbuf[len] = 0;				//recv string is not null terminated
