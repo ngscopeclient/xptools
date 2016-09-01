@@ -503,8 +503,8 @@ bool Socket::RecvPascalString(string& str)
 	int64_t tlen = static_cast<int64_t>(len) + 1;	//use larger int to avoid risk of overflow if str len == 4GB
 	char* rbuf = new char[tlen];
 	bool err = RecvLooped((unsigned char*)rbuf, len);
-	rbuf[len] = 0;				//recv string is not null terminated
-	str = rbuf;
+	rbuf[len] = 0;				//null terminate the string
+	str = string(rbuf, len);	//use sequence constructor since buffer may have embedded nulls
 	delete[] rbuf;
 	
 	return err;
