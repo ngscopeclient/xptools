@@ -40,7 +40,7 @@ using namespace std;
 
 /**
 	@brief Creates a socket
-	
+
 	@param af Address family of the socket (layer 3 protocol selection)
 	@param type Type of the socket (stream or datagram)
 	@param protocol Protocol of the socket (layer 4 protocol selection)
@@ -55,7 +55,7 @@ Socket::Socket(int af, int type, int protocol)
 	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
 		LogFatal("Failed to initialize socket library\n");
 #endif
-	
+
 	Open();
 }
 
@@ -76,7 +76,7 @@ void Socket::Open()
 
 /**
 	@brief Wraps an existing socket
-	
+
 	@param sock Socket to encapsulate
 	@param af Address family of the provided socket
  */
@@ -87,7 +87,7 @@ Socket::Socket(ZSOCKET sock, int af)
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
 	m_protocol = IPPROTO_TCP;
-	
+
 #ifdef _WINDOWS
 	WSADATA wdat;
 	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
@@ -101,7 +101,7 @@ Socket::Socket(ZSOCKET sock, int af)
 Socket::~Socket(void)
 {
 	Close();
-	
+
 #ifdef _WINDOWS
 	WSACleanup();
 #endif
@@ -127,10 +127,10 @@ void Socket::Close()
 
 /**
 	@brief Establishes a TCP connection to a remote host
-	
+
 	@param host DNS name or string IP address of remote host
 	@param port Port to connect to (host byte order)
-	
+
 	@return true on success, false on fail
  */
 bool Socket::Connect(const std::string& host, uint16_t port)
@@ -139,15 +139,15 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;		//allow both v4 and v6
 	hints.ai_socktype = m_type;
-	
+
 #ifndef _WINDOWS
 	hints.ai_flags = AI_NUMERICSERV;	//numeric port number, implied on windows
 #endif
-	
+
 	//Make ASCII port number
 	char sport[6];
 	snprintf(sport, sizeof(sport), "%5d", port);
-	
+
 #ifdef _WINDOWS
 	//Do a DNS lookup
 	ADDRINFO* address=NULL;
@@ -165,7 +165,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
 	}
-	
+
 	//Try actually connecting
 	bool connected = false;
 	for(addrinfo* p = address; p != NULL; p=p->ai_next)
@@ -174,7 +174,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 		m_protocol = p->ai_protocol;
 		Close();
 		Open();
-	
+
 		//Connect to the socket
 		if(0 == connect(m_socket, p->ai_addr, p->ai_addrlen))
 		{
@@ -182,7 +182,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 			break;
 		}
 	}
-	
+
 	//BUGFIX: clean up here so we don't leak the address if the connection failed
 	freeaddrinfo(address);
 
@@ -191,20 +191,20 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 	{
 		//Close the socket so destructor code won't try to send stuff to us
 		Close();
-		
+
 		LogWarning("Failed to connect to %s\n", host.c_str());
 		return false;
 	}
-	
+
 	return true;
 }
 
 /**
 	@brief Sends data over the socket
-	
+
 	@param buf Buffer to send
 	@param count Length of data buffer
-	
+
 	@return true on success, false on fail
  */
 bool Socket::SendLooped(const unsigned char* buf, int count)
@@ -219,7 +219,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		if(bytes_left == 0)
 			break;
 	}
-	
+
 	if(x < 0)
 	{
 		LogWarning("Socket write failed\n");
@@ -230,18 +230,18 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		//LogWarning("Socket closed unexpectedly\n");
 		return false;
 	}
-	
+
 	return true;
 }
 
 /**
 	@brief Recives data from a UDP socket
-	
+
 	@param buf Output buffer
 	@param len Length of the buffer
 	@param addr IP address of the sender
 	@param flags Socket flags
-	
+
 	@return Number of bytes read
  */
 /*
@@ -254,12 +254,12 @@ size_t Socket::RecvFrom(void* buf, size_t len, sockaddr_in& addr,  int flags)
 
 /**
 	@brief Sends data to a UDP socket
-	
+
 	@param buf Input buffer
 	@param len Length of the buffer
 	@param addr IP address of the recipient
 	@param flags Socket flags
-	
+
 	@return Number of bytes sent
  */
 /*
@@ -279,10 +279,10 @@ size_t Socket::SendTo(void* buf, size_t len, sockaddr_in& addr,  int flags)
 
 /**
 	@brief Recieves data from the socket
-	
+
 	@param buf The buffer to read into
 	@param len Length of read buffer
-	
+
 	@return true on success, false on fail
  */
 bool Socket::RecvLooped(unsigned char* buf, int len)
@@ -297,7 +297,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 		if(bytes_left == 0)
 			break;
 	}
-	
+
 	if(x < 0)
 	{
 		LogWarning("Socket read failed\n");
@@ -308,29 +308,29 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 		//LogWarning("Socket closed unexpectedly\n");
 		return false;
 	}
-	
+
 	return true;
 }
 
 /**
 	@brief Binds the socket to an address
-	
+
 	TODO: allow binding to specific addresses etc
-	
+
 	@param port Port to listen on
-	
+
 	@return true on success, false on fail
  */
 bool Socket::Bind(unsigned short port)
 {
 	sockaddr* addr;
 	socklen_t len;
-	
+
 	if(m_af == AF_INET)
 	{
 		sockaddr_in name;
 		memset(&name,0,sizeof(name));
-		
+
 		//Set port number
 		name.sin_family=m_af;
 		name.sin_port=htons(port);
@@ -341,7 +341,7 @@ bool Socket::Bind(unsigned short port)
 	{
 		sockaddr_in6 name;
 		memset(&name,0,sizeof(name));
-		
+
 		//Set port number
 		name.sin6_family=m_af;
 		name.sin6_port=htons(port);
@@ -355,7 +355,7 @@ bool Socket::Bind(unsigned short port)
 		LogError("Unable to bind socket\n");
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -370,15 +370,15 @@ bool Socket::Listen()
 		return false;
 	}
 	return true;
-	
+
 }
 
 /**
 	@brief Accepts an IPv4 connection on the socket
-	
+
 	@brief addr Output address of accepted connection
 	@brief len Size of the output buffer
-	
+
 	@return Socket for the client connection
  */
 Socket Socket::Accept(sockaddr_in* addr,ZSOCKLEN len)
@@ -400,10 +400,10 @@ Socket Socket::Accept(sockaddr_in* addr,ZSOCKLEN len)
 
 /**
 	@brief Accepts a connection on the socket
-	
+
 	@brief addr Output address of accepted connection
 	@brief len Size of the output buffer
-	
+
 	@return Socket for the client connection
  */
 Socket Socket::Accept()
@@ -427,10 +427,10 @@ Socket Socket::Accept()
 
 /**
 	@brief Accepts a IPv6 connection on the socket
-	
+
 	@brief addr Output address of accepted connection
 	@brief len Size of the output buffer
-	
+
 	@return Socket for the client connection
  */
 Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
@@ -452,7 +452,7 @@ Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
 
 /**
 	@brief Detaches the socket from this object
-	
+
 	@return Socket handle. The caller is responsible for closing the handle.
  */
 ZSOCKET Socket::Detach()
@@ -471,7 +471,7 @@ ZSOCKET Socket::Detach()
 
 	@param fd		Socket handle
 	@param str		String to send
-	
+
 	@return true on success, false on fail
  */
 bool Socket::SendPascalString(const std::string& str)
@@ -481,19 +481,19 @@ bool Socket::SendPascalString(const std::string& str)
 		LogError("SendPascalString() requires input <4 GB");
 		return false;
 	}
-		
+
 	uint32_t len = str.length();
 	if(!SendLooped((unsigned char*)&len, 4))
 		return false;
 	if(!SendLooped((unsigned char*)str.c_str(), len))
 		return false;
-		
+
 	return true;
 }
 
 /**
 	@brief Reads a Pascal-style string from a socket
-	
+
 	@return true on success, false on fail
  */
 bool Socket::RecvPascalString(string& str)
@@ -507,6 +507,6 @@ bool Socket::RecvPascalString(string& str)
 	rbuf[len] = 0;				//null terminate the string
 	str = string(rbuf, len);	//use sequence constructor since buffer may have embedded nulls
 	delete[] rbuf;
-	
+
 	return err;
 }

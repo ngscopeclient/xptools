@@ -1,2 +1,2 @@
-add_library(xptools STATIC 
+add_library(xptools STATIC
 	Socket.cpp)

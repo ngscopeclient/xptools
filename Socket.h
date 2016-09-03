@@ -91,7 +91,7 @@ public:
 	virtual bool RecvLooped(unsigned char* buf, int len);
 	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
-	
+
 	//Send/receive a string
 	virtual bool RecvPascalString(std::string& str);
 	virtual bool SendPascalString(const std::string& str);
@@ -102,7 +102,7 @@ public:
 	 */
 	operator ZSOCKET&()
 	{ return m_socket; }
-	
+
 	bool IsValid() const
 	{
 		#ifdef _WINDOWS
@@ -120,13 +120,13 @@ protected:
 		@brief Address family of this socket (typically AF_INET or AF_INET6)
 	 */
 	int m_af;
-	
+
 	///Type of the socket
 	int m_type;
-	
+
 	///Protocol of the socket
 	int m_protocol;
-	
+
 	/**
 		@brief The socket handle
 	 */
