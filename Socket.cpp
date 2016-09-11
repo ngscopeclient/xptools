@@ -325,28 +325,28 @@ bool Socket::Bind(unsigned short port)
 {
 	sockaddr* addr;
 	socklen_t len;
+	sockaddr_in name;
+	sockaddr_in6 name6;
 
 	if(m_af == AF_INET)
 	{
-		sockaddr_in name;
 		memset(&name,0,sizeof(name));
 
 		//Set port number
-		name.sin_family=m_af;
-		name.sin_port=htons(port);
+		name.sin_family = m_af;
+		name.sin_port = htons(port);
 		addr = reinterpret_cast<sockaddr*>(&name);
 		len = sizeof(name);
 	}
 	else
 	{
-		sockaddr_in6 name;
-		memset(&name,0,sizeof(name));
+		memset(&name6,0,sizeof(name6));
 
 		//Set port number
-		name.sin6_family=m_af;
-		name.sin6_port=htons(port);
-		addr = reinterpret_cast<sockaddr*>(&name);
-		len = sizeof(name);
+		name6.sin6_family = m_af;
+		name6.sin6_port = htons(port);
+		addr = reinterpret_cast<sockaddr*>(&name6);
+		len = sizeof(name6);
 	}
 
 	//Try binding the socket
