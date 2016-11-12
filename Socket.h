@@ -96,6 +96,9 @@ public:
 	virtual bool RecvPascalString(std::string& str);
 	virtual bool SendPascalString(const std::string& str);
 
+	//Set TCP_NODELAY on our socket
+	bool DisableNagle();
+
 	/**
 		@brief Convert us to the native OS socket type
 		@return A reference to our socket handle

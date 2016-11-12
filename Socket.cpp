@@ -36,6 +36,10 @@
 #include "../log/log.h"
 #include <memory.h>
 
+#ifndef _WIN32
+#include <netinet/tcp.h>
+#endif
+
 using namespace std;
 
 /**
@@ -509,4 +513,18 @@ bool Socket::RecvPascalString(string& str)
 	delete[] rbuf;
 
 	return err;
+}
+
+/**
+	@brief Disable the Nagle algorithm on the socket so that messages get sent right away
+
+	@return true on success, false on fail
+ */
+bool Socket::DisableNagle()
+{
+	int flag = 1;
+	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ))
+		return false;
+		
+	return true;
 }
