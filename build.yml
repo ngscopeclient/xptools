@@ -37,3 +37,4 @@ xptools:
     flags:
         - global
         - output/reloc
+        - library/target/log
