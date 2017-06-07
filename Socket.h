@@ -108,7 +108,7 @@ public:
 
 	bool IsValid() const
 	{
-		#ifdef _WINDOWS
+		#ifdef _WIN32
 			return (m_socket != INVALID_SOCKET);
 		#else
 			return (m_socket >= 0);

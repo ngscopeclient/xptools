@@ -54,7 +54,7 @@ Socket::Socket(int af, int type, int protocol)
 , m_type(type)
 , m_protocol(protocol)
 {
-#ifdef _WINDOWS
+#ifdef _WIN32
 	WSADATA wdat;
 	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
 		LogFatal("Failed to initialize socket library\n");
@@ -69,7 +69,7 @@ void Socket::Open()
 	m_socket = socket(m_af, m_type, m_protocol);
 
 	//Too bad error checking isn't portable!
-#ifdef _WINDOWS
+#ifdef _WIN32
 	if(INVALID_SOCKET == m_socket)
 		LogFatal("Failed to create socket\n");
 #else
@@ -92,7 +92,7 @@ Socket::Socket(ZSOCKET sock, int af)
 	m_type = SOCK_STREAM;
 	m_protocol = IPPROTO_TCP;
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 	WSADATA wdat;
 	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
 		LogFatal("Failed to initialize socket library\n");
@@ -106,7 +106,7 @@ Socket::~Socket(void)
 {
 	Close();
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 	WSACleanup();
 #endif
 }
@@ -114,7 +114,7 @@ Socket::~Socket(void)
 void Socket::Close()
 {
 	//There are a couple of different ways to close a socket...
-	#ifdef _WINDOWS
+	#ifdef _WIN32
 	if(m_socket != INVALID_SOCKET)
 	{
 		closesocket(m_socket);
@@ -144,7 +144,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 	hints.ai_family = AF_UNSPEC;		//allow both v4 and v6
 	hints.ai_socktype = m_type;
 
-#ifndef _WINDOWS
+#ifndef _WIN32
 	hints.ai_flags = AI_NUMERICSERV;	//numeric port number, implied on windows
 #endif
 
@@ -152,7 +152,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 	char sport[6];
 	snprintf(sport, sizeof(sport), "%5d", port);
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 	//Do a DNS lookup
 	ADDRINFO* address=NULL;
 #else
@@ -390,7 +390,7 @@ Socket Socket::Accept(sockaddr_in* addr,ZSOCKLEN len)
 	ZSOCKET sock = accept(m_socket,reinterpret_cast<sockaddr*>(addr),&len);
 
 	//Error check
-#ifdef _WINDOWS
+#ifdef _WIN32
 	if(sock==INVALID_SOCKET)
 #else
 	if(sock<0)
@@ -417,7 +417,7 @@ Socket Socket::Accept()
 	ZSOCKET sock = accept(m_socket, reinterpret_cast<sockaddr*>(&addr), &len);
 
 	//Error check
-#ifdef _WINDOWS
+#ifdef _WIN32
 	if(sock==INVALID_SOCKET)
 #else
 	if(sock < 0)
@@ -442,7 +442,7 @@ Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
 	ZSOCKET sock = accept(m_socket,reinterpret_cast<sockaddr*>(addr),&len);
 
 	//Error check
-#ifdef _WINDOWS
+#ifdef _WIN32
 	if(sock==INVALID_SOCKET)
 #else
 	if(sock < 0)
@@ -462,7 +462,7 @@ Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
 ZSOCKET Socket::Detach()
 {
 	ZSOCKET s = m_socket;
-#ifdef _WINDOWS
+#ifdef _WIN32
 	m_socket = INVALID_SOCKET;
 #else
 	m_socket = -1;
