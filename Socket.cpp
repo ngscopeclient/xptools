@@ -354,7 +354,7 @@ bool Socket::Bind(unsigned short port)
 	}
 
 	//Try binding the socket
-	if(0 != bind (m_socket, addr, len) )
+	if(0 != ::bind (m_socket, addr, len) )
 	{
 		LogError("Unable to bind socket\n");
 		return false;
