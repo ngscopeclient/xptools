@@ -57,7 +57,7 @@ Socket::Socket(int af, int type, int protocol)
 #ifdef _WIN32
 	WSADATA wdat;
 	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
-		LogFatal("Failed to initialize socket library\n");
+		LogError("Failed to initialize socket library\n");
 #endif
 
 	Open();
@@ -68,14 +68,8 @@ void Socket::Open()
 	//For once - a nice, portable call, no #ifdefs required.
 	m_socket = socket(m_af, m_type, m_protocol);
 
-	//Too bad error checking isn't portable!
-#ifdef _WIN32
-	if(INVALID_SOCKET == m_socket)
-		LogFatal("Failed to create socket\n");
-#else
-	if(-1 == m_socket)
-		LogFatal("Failed to create socket\n");
-#endif
+	if(!IsValid()
+		LogError("Failed to create socket\n");
 }
 
 /**
@@ -396,7 +390,7 @@ Socket Socket::Accept(sockaddr_in* addr,ZSOCKLEN len)
 	if(sock<0)
 #endif
 	{
-		LogFatal("Failed to accept socket connection (make sure socket is in listening mode)\n");
+		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
 	}
 
 	return Socket(sock,m_af);
@@ -423,7 +417,12 @@ Socket Socket::Accept()
 	if(sock < 0)
 #endif
 	{
-		LogFatal("Failed to accept socket connection (make sure socket is in listening mode)\n");
+		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
+		#ifdef _WIN32
+			return Socket(INVALID_SOCKET, m_af);
+		#else
+			return Socket(-1, m_af);
+		#endif
 	}
 
 	return Socket(sock,m_af);
@@ -448,7 +447,12 @@ Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
 	if(sock < 0)
 #endif
 	{
-		LogFatal("Failed to accept socket connection (make sure socket is in listening mode)\n");
+		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
+		#ifdef _WIN32
+			return Socket(INVALID_SOCKET, m_af);
+		#else
+			return Socket(-1, m_af);
+		#endif
 	}
 
 	return Socket(sock,m_af);
