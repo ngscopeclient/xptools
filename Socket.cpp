@@ -68,7 +68,7 @@ void Socket::Open()
 	//For once - a nice, portable call, no #ifdefs required.
 	m_socket = socket(m_af, m_type, m_protocol);
 
-	if(!IsValid()
+	if(!IsValid())
 		LogError("Failed to create socket\n");
 }
 
