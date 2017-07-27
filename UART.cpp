@@ -67,7 +67,7 @@ UART::UART(const std::string& devfile, int baud)
 		unsigned int port;
 		fflush(stdout);
 		sscanf(devfile.c_str(), "%127[^:]:%6u", host, &port);
-		//printf("[UART] Connecting to %s:%d\n", host, port);
+		//LogTrace("Connecting to %s:%d\n", host, port);
 		m_socket.Connect(host, port);
 	}
 	else
@@ -80,6 +80,7 @@ UART::UART(const std::string& devfile, int baud)
 		return;
 	#else
 		//Open the UART
+		//LogTrace("Opening TTY %s\n", devfile.c_str());
 		m_fd = open(devfile.c_str(), O_RDWR);
 		if(m_fd < 0)
 		{
@@ -188,7 +189,7 @@ bool UART::Read(unsigned char* data, int len)
 			return false;
 		#else
 			int x = 0;
-			while( (x = recv(m_fd, (char*)data, len, 0)) > 0)
+			while( (x = read(m_fd, (char*)data, len)) > 0)
 			{
 				len -= x;
 				data += x;
@@ -198,7 +199,7 @@ bool UART::Read(unsigned char* data, int len)
 
 			if(x < 0)
 			{
-				LogWarning("Socket read failed\n");
+				LogWarning("UART read failed\n");
 				return false;
 			}
 			else if(x == 0)
@@ -225,7 +226,7 @@ bool UART::Write(const unsigned char* data, int len)
 			return false;
 		#else
 			int x = 0;
-			while( (x = send(m_fd, (const char*)data, len, 0)) > 0)
+			while( (x = write(m_fd, (const char*)data, len)) > 0)
 			{
 				len -= x;
 				data += x;
@@ -235,7 +236,7 @@ bool UART::Write(const unsigned char* data, int len)
 
 			if(x < 0)
 			{
-				LogWarning("Socket write failed\n");
+				LogWarning("UART write failed\n");
 				return false;
 			}
 			else if(x == 0)
