@@ -1,5 +1,6 @@
 add_library(xptools STATIC
-	Socket.cpp)
+	Socket.cpp
+	UART.cpp)
 
 if(WIN32)
 target_link_libraries(xptools ws2_32)
