@@ -418,6 +418,7 @@ Socket Socket::Accept()
 #endif
 	{
 		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
+
 		#ifdef _WIN32
 			return Socket(INVALID_SOCKET, m_af);
 		#else
@@ -529,6 +530,6 @@ bool Socket::DisableNagle()
 	int flag = 1;
 	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ))
 		return false;
-		
+
 	return true;
 }
