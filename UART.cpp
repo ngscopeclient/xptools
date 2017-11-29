@@ -41,7 +41,12 @@
 #ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
+#include <asm/termios.h>
+
+//asm/termios.h seems to conflict with sys/ioctl.h and termios.h
+//so just pull these by hand
+int tcflush(int fd, int queue);
+int ioctl(int fd, unsigned long request, ...);
 #endif
 
 using namespace std;
@@ -88,56 +93,21 @@ UART::UART(const std::string& devfile, int baud)
 			return;
 		}
 
-		/*
-			TODO
-			B50
-			B75
-			B110
-			B134
-			B150
-			B200
-			B300
-			B600
-			B1200
-			B1800
-			B2400
-			B4800
-			B9600
-			B19200
-			B38400
-			B57600
-			B115200
-			B230400
-		*/
-		int baud_const = 0;
-		switch(baud)
-		{
-		case 9600:
-			baud_const = B9600;
-			break;
-
-		case 115200:
-			baud_const = B115200;
-			break;
-
-		default:
-			LogError("Invalid baud rate specified\n");
-			return;
-		}
-
 		//Set flags
-		termios flags;
+		termios2 flags;
 		memset(&flags, 0, sizeof(flags));
-		tcgetattr(m_fd, &flags);
-		flags.c_cflag = baud_const | CS8 | CLOCAL | CREAD;
+		ioctl(m_fd, TCGETS2, &flags);
+		flags.c_cflag = CS8 | CLOCAL | CREAD | BOTHER;
 		flags.c_iflag = IGNBRK | IGNPAR;
 		flags.c_cc[VMIN] = 1;
+		flags.c_ispeed = baud;
+		flags.c_ospeed = baud;
 		if(0 != tcflush(m_fd, TCIFLUSH))
 		{
 			LogError("Fail to flush tty\n");
 			return;
 		}
-		if(0 != tcsetattr(m_fd, TCSANOW, &flags))
+		if(0 != ioctl(m_fd, TCSETS2, &flags))
 		{
 			LogError("Fail to set attr\n");
 			return;
