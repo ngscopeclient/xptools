@@ -33,6 +33,10 @@
  */
 
 #include "Socket.h"
+
+#ifdef __MINGW32__
+#undef ERROR
+#endif
 #include "../log/log.h"
 #include <memory.h>
 
