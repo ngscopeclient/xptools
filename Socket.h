@@ -99,6 +99,11 @@ public:
 	//Set TCP_NODELAY on our socket
 	bool DisableNagle();
 
+	// Set RX/TX timeouts
+	bool SetRxTimeout(unsigned int microSeconds);
+	bool SetTxTimeout(unsigned int microSeconds);
+
+
 	/**
 		@brief Convert us to the native OS socket type
 		@return A reference to our socket handle
