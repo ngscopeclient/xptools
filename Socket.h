@@ -89,6 +89,7 @@ public:
 	//Send / receive rawdata
 	virtual bool SendLooped(const unsigned char* buf, int count);
 	virtual bool RecvLooped(unsigned char* buf, int len);
+	virtual bool RecvLooped(unsigned char* buf, int len, int timeout);
 	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 
