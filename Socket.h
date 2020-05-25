@@ -120,8 +120,9 @@ public:
 		#endif
 	}
 
-protected:
 	virtual void Close();
+
+protected:
 	virtual void Open();
 
 	/**
