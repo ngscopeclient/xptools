@@ -28,8 +28,8 @@
 ***********************************************************************************************************************/
 
 /**
-        @file Socket.h
-        @brief Declaration of Socket class
+    @file Socket.h
+    @brief Declaration of Socket class
  */
 #ifndef Socket_h
 #define Socket_h
@@ -56,7 +56,7 @@
 #endif
 
 /**
-        @brief Class representing a network socket.
+    @brief Class representing a network socket.
  */
 class Socket
 {
@@ -105,9 +105,9 @@ class Socket
 	bool SetTxTimeout(unsigned int microSeconds);
 
 	/**
-    @brief Convert us to the native OS socket type
-    @return A reference to our socket handle
- */
+    	@brief Convert us to the native OS socket type
+    	@return A reference to our socket handle
+	 */
 	operator ZSOCKET&() { return m_socket; }
 
 	bool IsValid() const
@@ -129,10 +129,10 @@ class Socket
 	 */
 	int m_af;
 
-	///Type of the socket
+	//Type of the socket
 	int m_type;
 
-	///Protocol of the socket
+	//Protocol of the socket
 	int m_protocol;
 
 	/**

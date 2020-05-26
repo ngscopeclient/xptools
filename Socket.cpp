@@ -283,6 +283,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 {
 	return RecvLooped(buf, len, 2);
 
+	/**
 	unsigned char* p = buf;
 	int bytes_left = len;
 	int x = 0;
@@ -307,6 +308,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	}
 
 	return true;
+	 */
 }
 
 /**
