@@ -34,6 +34,7 @@
 
 #include "Socket.h"
 #include "../log/log.h"
+#include <ctime>
 #include <memory.h>
 
 #ifndef _WIN32
@@ -49,14 +50,11 @@ using namespace std;
 	@param type Type of the socket (stream or datagram)
 	@param protocol Protocol of the socket (layer 4 protocol selection)
  */
-Socket::Socket(int af, int type, int protocol)
-: m_af(af)
-, m_type(type)
-, m_protocol(protocol)
+Socket::Socket(int af, int type, int protocol) : m_af(af), m_type(type), m_protocol(protocol)
 {
 #ifdef _WIN32
 	WSADATA wdat;
-	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
+	if(0 != WSAStartup(MAKEWORD(2, 2), &wdat))
 		LogError("Failed to initialize socket library\n");
 #endif
 
@@ -78,9 +76,7 @@ void Socket::Open()
 	@param sock Socket to encapsulate
 	@param af Address family of the provided socket
  */
-Socket::Socket(ZSOCKET sock, int af)
-: m_af(af)
-, m_socket(sock)
+Socket::Socket(ZSOCKET sock, int af) : m_af(af), m_socket(sock)
 {
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
@@ -88,7 +84,7 @@ Socket::Socket(ZSOCKET sock, int af)
 
 #ifdef _WIN32
 	WSADATA wdat;
-	if(0 != WSAStartup(MAKEWORD(2,2),&wdat))
+	if(0 != WSAStartup(MAKEWORD(2, 2), &wdat))
 		LogFatal("Failed to initialize socket library\n");
 #endif
 }
@@ -107,20 +103,20 @@ Socket::~Socket(void)
 
 void Socket::Close()
 {
-	//There are a couple of different ways to close a socket...
-	#ifdef _WIN32
+//There are a couple of different ways to close a socket...
+#ifdef _WIN32
 	if(m_socket != INVALID_SOCKET)
 	{
 		closesocket(m_socket);
 		m_socket = INVALID_SOCKET;
 	}
-	#else
+#else
 	if(m_socket >= 0)
 	{
 		close(m_socket);
 		m_socket = -1;
 	}
-	#endif
+#endif
 }
 
 /**
@@ -135,7 +131,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 {
 	addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;		//allow both v4 and v6
+	hints.ai_family = AF_UNSPEC;	//allow both v4 and v6
 	hints.ai_socktype = m_type;
 
 #ifndef _WIN32
@@ -148,7 +144,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 
 #ifdef _WIN32
 	//Do a DNS lookup
-	ADDRINFO* address=NULL;
+	ADDRINFO* address = NULL;
 #else
 	addrinfo* address = NULL;
 #endif
@@ -158,7 +154,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
 	}
-	if(address==NULL)
+	if(address == NULL)
 	{
 		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
@@ -166,7 +162,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 
 	//Try actually connecting
 	bool connected = false;
-	for(addrinfo* p = address; p != NULL; p=p->ai_next)
+	for(addrinfo* p = address; p != NULL; p = p->ai_next)
 	{
 		m_af = p->ai_family;
 		m_protocol = p->ai_protocol;
@@ -210,7 +206,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 	const unsigned char* p = buf;
 	int bytes_left = count;
 	int x = 0;
-	while( (x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
+	while((x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
 	{
 		bytes_left -= x;
 		p += x;
@@ -285,10 +281,57 @@ size_t Socket::SendTo(void* buf, size_t len, sockaddr_in& addr,  int flags)
  */
 bool Socket::RecvLooped(unsigned char* buf, int len)
 {
+	return RecvLooped(buf, len, 2);
+
+	/**
 	unsigned char* p = buf;
 	int bytes_left = len;
 	int x = 0;
-	while( (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
+
+	while((x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
+	{
+		bytes_left -= x;
+		p += x;
+		if(bytes_left == 0)
+			break;
+	}
+
+	if(x < 0)
+	{
+		LogWarning("Socket read failed\n");
+		return false;
+	}
+	else if(x == 0)
+	{
+		//LogWarning("Socket closed unexpectedly\n");
+		return false;
+	}
+
+	return true;
+	 */
+}
+
+/**
+	@brief Recieves data from the socket with a timeout
+
+	@param buf The buffer to read into
+	@param len Length of read buffer
+	@param timeout Timeout in seconds
+
+	@return true on success, false on fail
+ */
+bool Socket::RecvLooped(unsigned char* buf, int len, int timeout)
+{
+	unsigned char* p = buf;
+	int bytes_left = len;
+	int x = 0;
+	clock_t start = clock();
+
+	struct timeval tv;
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+	setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+	while(((int)(clock() - start) < CLOCKS_PER_SEC * timeout) && (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
 	{
 		bytes_left -= x;
 		p += x;
@@ -328,7 +371,7 @@ bool Socket::Bind(unsigned short port)
 
 	if(m_af == AF_INET)
 	{
-		memset(&name,0,sizeof(name));
+		memset(&name, 0, sizeof(name));
 
 		//Set port number
 		name.sin_family = m_af;
@@ -338,7 +381,7 @@ bool Socket::Bind(unsigned short port)
 	}
 	else
 	{
-		memset(&name6,0,sizeof(name6));
+		memset(&name6, 0, sizeof(name6));
 
 		//Set port number
 		name6.sin6_family = m_af;
@@ -348,7 +391,7 @@ bool Socket::Bind(unsigned short port)
 	}
 
 	//Try binding the socket
-	if(0 != ::bind (m_socket, addr, len) )
+	if(0 != ::bind(m_socket, addr, len))
 	{
 		LogError("Unable to bind socket\n");
 		return false;
@@ -362,13 +405,12 @@ bool Socket::Bind(unsigned short port)
  */
 bool Socket::Listen()
 {
-	if(0 != listen(m_socket,SOMAXCONN))
+	if(0 != listen(m_socket, SOMAXCONN))
 	{
 		LogWarning("Can't listen to socket\n");
 		return false;
 	}
 	return true;
-
 }
 
 /**
@@ -379,21 +421,21 @@ bool Socket::Listen()
 
 	@return Socket for the client connection
  */
-Socket Socket::Accept(sockaddr_in* addr,ZSOCKLEN len)
+Socket Socket::Accept(sockaddr_in* addr, ZSOCKLEN len)
 {
-	ZSOCKET sock = accept(m_socket,reinterpret_cast<sockaddr*>(addr),&len);
+	ZSOCKET sock = accept(m_socket, reinterpret_cast<sockaddr*>(addr), &len);
 
 	//Error check
 #ifdef _WIN32
-	if(sock==INVALID_SOCKET)
+	if(sock == INVALID_SOCKET)
 #else
-	if(sock<0)
+	if(sock < 0)
 #endif
 	{
 		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
 	}
 
-	return Socket(sock,m_af);
+	return Socket(sock, m_af);
 }
 
 /**
@@ -412,21 +454,21 @@ Socket Socket::Accept()
 
 	//Error check
 #ifdef _WIN32
-	if(sock==INVALID_SOCKET)
+	if(sock == INVALID_SOCKET)
 #else
 	if(sock < 0)
 #endif
 	{
 		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
 
-		#ifdef _WIN32
-			return Socket(INVALID_SOCKET, m_af);
-		#else
-			return Socket(-1, m_af);
-		#endif
+#ifdef _WIN32
+		return Socket(INVALID_SOCKET, m_af);
+#else
+		return Socket(-1, m_af);
+#endif
 	}
 
-	return Socket(sock,m_af);
+	return Socket(sock, m_af);
 }
 
 /**
@@ -437,26 +479,26 @@ Socket Socket::Accept()
 
 	@return Socket for the client connection
  */
-Socket Socket::Accept(sockaddr_in6* addr,ZSOCKLEN len)
+Socket Socket::Accept(sockaddr_in6* addr, ZSOCKLEN len)
 {
-	ZSOCKET sock = accept(m_socket,reinterpret_cast<sockaddr*>(addr),&len);
+	ZSOCKET sock = accept(m_socket, reinterpret_cast<sockaddr*>(addr), &len);
 
 	//Error check
 #ifdef _WIN32
-	if(sock==INVALID_SOCKET)
+	if(sock == INVALID_SOCKET)
 #else
 	if(sock < 0)
 #endif
 	{
 		LogError("Failed to accept socket connection (make sure socket is in listening mode)\n");
-		#ifdef _WIN32
-			return Socket(INVALID_SOCKET, m_af);
-		#else
-			return Socket(-1, m_af);
-		#endif
+#ifdef _WIN32
+		return Socket(INVALID_SOCKET, m_af);
+#else
+		return Socket(-1, m_af);
+#endif
 	}
 
-	return Socket(sock,m_af);
+	return Socket(sock, m_af);
 }
 
 /**
@@ -510,7 +552,7 @@ bool Socket::RecvPascalString(string& str)
 	uint32_t len;
 	if(!RecvLooped((unsigned char*)&len, 4))
 		return false;
-	int64_t tlen = static_cast<int64_t>(len) + 1;	//use larger int to avoid risk of overflow if str len == 4GB
+	int64_t tlen = static_cast<int64_t>(len) + 1;	 //use larger int to avoid risk of overflow if str len == 4GB
 	char* rbuf = new char[tlen];
 	bool err = RecvLooped((unsigned char*)rbuf, len);
 	rbuf[len] = 0;				//null terminate the string
@@ -528,7 +570,7 @@ bool Socket::RecvPascalString(string& str)
 bool Socket::DisableNagle()
 {
 	int flag = 1;
-	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ))
+	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag)))
 		return false;
 
 	return true;
@@ -540,7 +582,7 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 	tv.tv_sec = 0;
 	tv.tv_usec = (suseconds_t)microSeconds;
 
-  if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, &tv, sizeof(tv)))
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, &tv, sizeof(tv)))
 		return false;
 
 	return true;
@@ -551,7 +593,7 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = (suseconds_t)microSeconds;
-  if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, &tv, sizeof(tv)))
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, &tv, sizeof(tv)))
 		return false;
 
 	return true;

@@ -45,11 +45,11 @@
 
 #else
 
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #define ZSOCKLEN socklen_t
 #define ZSOCKET int
 
@@ -61,10 +61,10 @@
 class Socket
 {
 public:
-	Socket(int af,int type,int protocol);
+	Socket(int af, int type, int protocol);
 
 	//Create a Socket object from an existing socket
-	Socket(ZSOCKET sock, int af=PF_INET);
+	Socket(ZSOCKET sock, int af = PF_INET);
 
 	//Destructor
 	virtual ~Socket(void);
@@ -79,8 +79,8 @@ public:
 	virtual bool Listen();
 
 	//Accept a new connection
-	virtual Socket Accept(sockaddr_in* addr,ZSOCKLEN len);
-	virtual Socket Accept(sockaddr_in6* addr,ZSOCKLEN len);
+	virtual Socket Accept(sockaddr_in* addr, ZSOCKLEN len);
+	virtual Socket Accept(sockaddr_in6* addr, ZSOCKLEN len);
 	virtual Socket Accept();
 
 	//Disconnect us from the socket object
@@ -89,6 +89,7 @@ public:
 	//Send / receive rawdata
 	virtual bool SendLooped(const unsigned char* buf, int count);
 	virtual bool RecvLooped(unsigned char* buf, int len);
+	virtual bool RecvLooped(unsigned char* buf, int len, int timeout);
 	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 
@@ -99,25 +100,23 @@ public:
 	//Set TCP_NODELAY on our socket
 	bool DisableNagle();
 
-	// Set RX/TX timeouts
+	//Set RX/TX timeouts
 	bool SetRxTimeout(unsigned int microSeconds);
 	bool SetTxTimeout(unsigned int microSeconds);
-
 
 	/**
 		@brief Convert us to the native OS socket type
 		@return A reference to our socket handle
 	 */
-	operator ZSOCKET&()
-	{ return m_socket; }
+	operator ZSOCKET&() { return m_socket; }
 
 	bool IsValid() const
 	{
-		#ifdef _WIN32
-			return (m_socket != INVALID_SOCKET);
-		#else
-			return (m_socket >= 0);
-		#endif
+#ifdef _WIN32
+		return (m_socket != INVALID_SOCKET);
+#else
+		return (m_socket >= 0);
+#endif
 	}
 
 	virtual void Close();
@@ -130,10 +129,10 @@ protected:
 	 */
 	int m_af;
 
-	///Type of the socket
+	/// @brief Type of the socket
 	int m_type;
 
-	///Protocol of the socket
+	/// @brief Protocol of the socket
 	int m_protocol;
 
 	/**
