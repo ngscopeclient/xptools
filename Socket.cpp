@@ -50,7 +50,12 @@ using namespace std;
 	@param type Type of the socket (stream or datagram)
 	@param protocol Protocol of the socket (layer 4 protocol selection)
  */
-Socket::Socket(int af, int type, int protocol) : m_af(af), m_type(type), m_protocol(protocol)
+Socket::Socket(int af, int type, int protocol)
+	: m_af(af)
+	, m_type(type)
+	, m_protocol(protocol)
+	, m_rxtimeout(0)
+	, m_txtimeout(0)
 {
 #ifdef _WIN32
 	WSADATA wdat;
@@ -76,7 +81,11 @@ void Socket::Open()
 	@param sock Socket to encapsulate
 	@param af Address family of the provided socket
  */
-Socket::Socket(ZSOCKET sock, int af) : m_af(af), m_socket(sock)
+Socket::Socket(ZSOCKET sock, int af)
+	: m_af(af)
+	, m_socket(sock)
+	, m_rxtimeout(0)
+	, m_txtimeout(0)
 {
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
@@ -206,15 +215,22 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 	const unsigned char* p = buf;
 	int bytes_left = count;
 	int x = 0;
-	clock_t start = clock();
 
-	while(((int)(clock() - start) < CLOCKS_PER_SEC / 1000000 * m_rxtimeout) &&
-		  (x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
+	clock_t start = clock();
+	clock_t end = CLOCKS_PER_SEC / 1000000 * m_txtimeout;
+
+	while((x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
 	{
 		bytes_left -= x;
 		p += x;
 		if(bytes_left == 0)
 			break;
+
+		if( (m_rxtimeout > 0) && ((int)(clock() - start) < end) )
+		{
+			LogWarning("send timeout\n");
+			return false;
+		}
 	}
 
 	if(x < 0)
@@ -287,15 +303,22 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	unsigned char* p = buf;
 	int bytes_left = len;
 	int x = 0;
-	clock_t start = clock();
 
-	while(((int)(clock() - start) < CLOCKS_PER_SEC / 1000000 * m_rxtimeout) &&
-		  (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)	//2 second timeout
+	clock_t start = clock();
+	clock_t end = CLOCKS_PER_SEC / 1000000 * m_rxtimeout;
+
+	while( (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
 	{
 		bytes_left -= x;
 		p += x;
 		if(bytes_left == 0)
 			break;
+
+		if( (m_rxtimeout > 0) && ( ((int)(clock() - start) > end) ) )
+		{
+			LogWarning("Socket read timed out\n");
+			return false;
+		}
 	}
 
 	if(x < 0)
