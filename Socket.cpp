@@ -34,8 +34,8 @@
 
 #include "Socket.h"
 #include "../log/log.h"
-#include <memory.h>
 #include <ctime>
+#include <memory.h>
 
 #ifndef _WIN32
 #include <netinet/tcp.h>
@@ -284,7 +284,7 @@ size_t Socket::SendTo(void* buf, size_t len, sockaddr_in& addr,  int flags)
 bool Socket::RecvLooped(unsigned char *buf, int len)
 {
 	return RecvLooped(buf, len, 2);
-	
+
 	unsigned char *p = buf;
 	int bytes_left = len;
 	int x = 0;
