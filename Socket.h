@@ -60,7 +60,7 @@
  */
 class Socket
 {
-   public:
+	public:
 	Socket(int af, int type, int protocol);
 
 	//Create a Socket object from an existing socket
@@ -121,7 +121,7 @@ class Socket
 
 	virtual void Close();
 
-   protected:
+	protected:
 	virtual void Open();
 
 	/**
