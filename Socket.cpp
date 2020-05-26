@@ -68,7 +68,6 @@ void Socket::Open()
 	struct timeval tv;
 	tv.tv_sec = 2;	  //2 second timeout
 	tv.tv_usec = 0;
-	setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 	if(!IsValid())
 		LogError("Failed to create socket\n");
@@ -210,7 +209,10 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 	const unsigned char* p = buf;
 	int bytes_left = count;
 	int x = 0;
-	while((x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
+	clock_t start = clock();
+
+	while(((int)(clock() - start) < CLOCKS_PER_SEC / 1000000 * m_rxtimeout) &&
+		  (x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
 	{
 		bytes_left -= x;
 		p += x;
@@ -229,7 +231,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		return false;
 	}
 
-	return true;
+	return bytes_left == 0;
 }
 
 /**
@@ -290,7 +292,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	int x = 0;
 	clock_t start = clock();
 
-	while(((int)(clock() - start) < CLOCKS_PER_SEC * 2) &&
+	while(((int)(clock() - start) < CLOCKS_PER_SEC / 1000000 * m_rxtimeout) &&
 		  (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)	//2 second timeout
 	{
 		bytes_left -= x;
@@ -545,6 +547,7 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, &tv, sizeof(tv)))
 		return false;
 
+	m_rxtimeout = microSeconds;
 	return true;
 }
 
@@ -556,5 +559,6 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, &tv, sizeof(tv)))
 		return false;
 
+	m_txtimeout = microSeconds;
 	return true;
 }
