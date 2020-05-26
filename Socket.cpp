@@ -65,10 +65,7 @@ void Socket::Open()
 {
 	//For once - a nice, portable call, no #ifdefs required.
 	m_socket = socket(m_af, m_type, m_protocol);
-	struct timeval tv;
-	tv.tv_sec = 2;	  //2 second timeout
-	tv.tv_usec = 0;
-
+	
 	if(!IsValid())
 		LogError("Failed to create socket\n");
 }
