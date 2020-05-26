@@ -28,8 +28,8 @@
 ***********************************************************************************************************************/
 
 /**
-    @file Socket.h
-    @brief Declaration of Socket class
+	@file Socket.h
+	@brief Declaration of Socket class
  */
 #ifndef Socket_h
 #define Socket_h
@@ -56,7 +56,7 @@
 #endif
 
 /**
-    @brief Class representing a network socket.
+	@brief Class representing a network socket.
  */
 class Socket
 {
@@ -105,8 +105,8 @@ class Socket
 	bool SetTxTimeout(unsigned int microSeconds);
 
 	/**
-    	@brief Convert us to the native OS socket type
-    	@return A reference to our socket handle
+		@brief Convert us to the native OS socket type
+		@return A reference to our socket handle
 	 */
 	operator ZSOCKET&() { return m_socket; }
 
@@ -125,7 +125,7 @@ class Socket
 	virtual void Open();
 
 	/**
-    	@brief Address family of this socket (typically AF_INET or AF_INET6)
+		@brief Address family of this socket (typically AF_INET or AF_INET6)
 	 */
 	int m_af;
 
@@ -136,7 +136,7 @@ class Socket
 	int m_protocol;
 
 	/**
-    	@brief The socket handle
+		@brief The socket handle
 	 */
 	ZSOCKET m_socket;
 };
