@@ -65,7 +65,7 @@
  */
 class Socket
 {
-public:
+   public:
 	Socket(int af, int type, int protocol);
 
 	// Create a Socket object from an existing socket
@@ -75,7 +75,7 @@ public:
 	virtual ~Socket(void);
 
 	// Connect to a host (automatic DNS resolution)
-	virtual bool Connect(const std::string &host, uint16_t port);
+	virtual bool Connect(const std::string& host, uint16_t port);
 
 	// Bind to a port (any available interface)
 	virtual bool Bind(unsigned short port);
@@ -84,23 +84,23 @@ public:
 	virtual bool Listen();
 
 	// Accept a new connection
-	virtual Socket Accept(sockaddr_in *addr, ZSOCKLEN len);
-	virtual Socket Accept(sockaddr_in6 *addr, ZSOCKLEN len);
+	virtual Socket Accept(sockaddr_in* addr, ZSOCKLEN len);
+	virtual Socket Accept(sockaddr_in6* addr, ZSOCKLEN len);
 	virtual Socket Accept();
 
 	// Disconnect us from the socket object
 	virtual ZSOCKET Detach();
 
 	// Send / receive rawdata
-	virtual bool SendLooped(const unsigned char *buf, int count);
-	virtual bool RecvLooped(unsigned char *buf, int len);
-	virtual bool RecvLooped(unsigned char *buf, int len, int timeout);
+	virtual bool SendLooped(const unsigned char* buf, int count);
+	virtual bool RecvLooped(unsigned char* buf, int len);
+	virtual bool RecvLooped(unsigned char* buf, int len, int timeout);
 	// size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	// size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 
 	// Send/receive a string
-	virtual bool RecvPascalString(std::string &str);
-	virtual bool SendPascalString(const std::string &str);
+	virtual bool RecvPascalString(std::string& str);
+	virtual bool SendPascalString(const std::string& str);
 
 	// Set TCP_NODELAY on our socket
 	bool DisableNagle();
@@ -113,7 +113,7 @@ public:
     @brief Convert us to the native OS socket type
     @return A reference to our socket handle
 */
-	operator ZSOCKET &() { return m_socket; }
+	operator ZSOCKET&() { return m_socket; }
 
 	bool IsValid() const
 	{
@@ -126,7 +126,7 @@ public:
 
 	virtual void Close();
 
-protected:
+   protected:
 	virtual void Open();
 
 	/**
