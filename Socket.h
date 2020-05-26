@@ -129,10 +129,10 @@ protected:
 	 */
 	int m_af;
 
-	//Type of the socket
+	/// @brief Type of the socket
 	int m_type;
 
-	//Protocol of the socket
+	/// @brief Protocol of the socket
 	int m_protocol;
 
 	/**
