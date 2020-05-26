@@ -36,7 +36,7 @@
 
 #include <string>
 
-// Pull in some OS specific stuff
+//Pull in some OS specific stuff
 #ifdef _WIN32
 
 #include <ws2tcpip.h>
@@ -63,44 +63,44 @@ class Socket
    public:
 	Socket(int af, int type, int protocol);
 
-	// Create a Socket object from an existing socket
+	//Create a Socket object from an existing socket
 	Socket(ZSOCKET sock, int af = PF_INET);
 
-	// Destructor
+	//Destructor
 	virtual ~Socket(void);
 
-	// Connect to a host (automatic DNS resolution)
+	//Connect to a host (automatic DNS resolution)
 	virtual bool Connect(const std::string& host, uint16_t port);
 
-	// Bind to a port (any available interface)
+	//Bind to a port (any available interface)
 	virtual bool Bind(unsigned short port);
 
-	// Put us in listening mode
+	//Put us in listening mode
 	virtual bool Listen();
 
-	// Accept a new connection
+	//Accept a new connection
 	virtual Socket Accept(sockaddr_in* addr, ZSOCKLEN len);
 	virtual Socket Accept(sockaddr_in6* addr, ZSOCKLEN len);
 	virtual Socket Accept();
 
-	// Disconnect us from the socket object
+	//Disconnect us from the socket object
 	virtual ZSOCKET Detach();
 
-	// Send / receive rawdata
+	//Send / receive rawdata
 	virtual bool SendLooped(const unsigned char* buf, int count);
 	virtual bool RecvLooped(unsigned char* buf, int len);
 	virtual bool RecvLooped(unsigned char* buf, int len, int timeout);
-	// size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
-	// size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
+	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
+	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 
-	// Send/receive a string
+	//Send/receive a string
 	virtual bool RecvPascalString(std::string& str);
 	virtual bool SendPascalString(const std::string& str);
 
-	// Set TCP_NODELAY on our socket
+	//Set TCP_NODELAY on our socket
 	bool DisableNagle();
 
-	// Set RX/TX timeouts
+	//Set RX/TX timeouts
 	bool SetRxTimeout(unsigned int microSeconds);
 	bool SetTxTimeout(unsigned int microSeconds);
 
@@ -125,19 +125,19 @@ class Socket
 	virtual void Open();
 
 	/**
-    @brief Address family of this socket (typically AF_INET or AF_INET6)
-*/
+    	@brief Address family of this socket (typically AF_INET or AF_INET6)
+	 */
 	int m_af;
 
-	/// Type of the socket
+	///Type of the socket
 	int m_type;
 
-	/// Protocol of the socket
+	///Protocol of the socket
 	int m_protocol;
 
 	/**
-    @brief The socket handle
-*/
+    	@brief The socket handle
+	 */
 	ZSOCKET m_socket;
 };
 
