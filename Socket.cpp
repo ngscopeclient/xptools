@@ -65,6 +65,10 @@ void Socket::Open()
 {
 	//For once - a nice, portable call, no #ifdefs required.
 	m_socket = socket(m_af, m_type, m_protocol);
+	struct timeval tv;
+	tv.tv_sec = 2;	  //2 second timeout
+	tv.tv_usec = 0;
+	setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 	if(!IsValid())
 		LogError("Failed to create socket\n");
@@ -281,57 +285,13 @@ size_t Socket::SendTo(void* buf, size_t len, sockaddr_in& addr,  int flags)
  */
 bool Socket::RecvLooped(unsigned char* buf, int len)
 {
-	return RecvLooped(buf, len, 2);
-
-	/**
-	unsigned char* p = buf;
-	int bytes_left = len;
-	int x = 0;
-
-	while((x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
-	{
-		bytes_left -= x;
-		p += x;
-		if(bytes_left == 0)
-			break;
-	}
-
-	if(x < 0)
-	{
-		LogWarning("Socket read failed\n");
-		return false;
-	}
-	else if(x == 0)
-	{
-		//LogWarning("Socket closed unexpectedly\n");
-		return false;
-	}
-
-	return true;
-	 */
-}
-
-/**
-	@brief Recieves data from the socket with a timeout
-
-	@param buf The buffer to read into
-	@param len Length of read buffer
-	@param timeout Timeout in seconds
-
-	@return true on success, false on fail
- */
-bool Socket::RecvLooped(unsigned char* buf, int len, int timeout)
-{
 	unsigned char* p = buf;
 	int bytes_left = len;
 	int x = 0;
 	clock_t start = clock();
 
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-	while(((int)(clock() - start) < CLOCKS_PER_SEC * timeout) && (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
+	while(((int)(clock() - start) < CLOCKS_PER_SEC * 2) &&
+		  (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)	//2 second timeout
 	{
 		bytes_left -= x;
 		p += x;
@@ -350,7 +310,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len, int timeout)
 		return false;
 	}
 
-	return true;
+	return bytes_left == 0;
 }
 
 /**
