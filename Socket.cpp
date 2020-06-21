@@ -35,6 +35,7 @@
 #include "Socket.h"
 #include "../log/log.h"
 #include <ctime>
+#include <cmath>
 #include <memory.h>
 
 #ifndef _WIN32
@@ -560,12 +561,20 @@ bool Socket::DisableNagle()
 
 bool Socket::SetRxTimeout(unsigned int microSeconds)
 {
+#ifdef _WIN32
+	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
+	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
+
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, (const char*)timeout, sizeof(DWORD)))
+		return false;
+#else
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = (suseconds_t)microSeconds;
 
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, &tv, sizeof(tv)))
 		return false;
+#endif
 
 	m_rxtimeout = microSeconds;
 	return true;
@@ -573,11 +582,19 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 
 bool Socket::SetTxTimeout(unsigned int microSeconds)
 {
+#ifdef _WIN32
+	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
+	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
+
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, (const char*)timeout, sizeof(DWORD)))
+		return false;
+#else
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = (suseconds_t)microSeconds;
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, &tv, sizeof(tv)))
 		return false;
+#endif
 
 	m_txtimeout = microSeconds;
 	return true;

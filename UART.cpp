@@ -82,7 +82,7 @@ UART::UART(const std::string& devfile, int baud)
 		(const void)devfile;
 		(const void)baud;
 		m_fd = INVALID_HANDLE_VALUE;
-		LogError("Windows UART stuff not implemented",);
+		LogError("Windows UART stuff not implemented");
 		return;
 	#else
 		//Open the UART
