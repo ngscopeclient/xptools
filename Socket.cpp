@@ -569,8 +569,8 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 		return false;
 #else
 	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = (suseconds_t)microSeconds;
+	tv.tv_sec = microSeconds/1000000;
+	tv.tv_usec = (suseconds_t)(microSeconds%1000000);
 
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, &tv, sizeof(tv)))
 		return false;
@@ -590,8 +590,8 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 		return false;
 #else
 	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = (suseconds_t)microSeconds;
+	tv.tv_sec = microSeconds/1000000;
+	tv.tv_usec = (suseconds_t)(microSeconds%1000000);
 	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, &tv, sizeof(tv)))
 		return false;
 #endif
