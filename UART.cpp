@@ -100,6 +100,7 @@ UART::UART(const std::string& devfile, int baud)
 		ioctl(m_fd, TCGETS2, &flags);
 		flags.c_cflag = CS8 | CLOCAL | CREAD | BOTHER;
 		flags.c_iflag = IGNBRK | IGNPAR;
+		flags.c_oflag = 0;
 		flags.c_cc[VMIN] = 1;
 		flags.c_ispeed = baud;
 		flags.c_ospeed = baud;
