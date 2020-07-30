@@ -64,6 +64,37 @@ UART::UART(const std::string& devfile, int baud)
 	: m_networked(false)
 	, m_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 {
+	Connect(devfile, baud);
+}
+
+/**
+	@brief Constructor
+ */
+UART::UART()
+	: m_networked(false)
+	, m_fd(-1)
+	, m_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+{
+}
+
+
+/**
+	@brief Destructor
+ */
+UART::~UART() {
+	Close();
+}
+
+/**
+	@brief Connects to a serial port
+
+	@throw JtagException on failure
+
+	@param devfile 	The device file
+	@param baud		Baud rate to use (in bits per second)
+ */
+bool UART::Connect(const std::string& devfile, int baud)
+{
 	if(devfile.find(":") != string::npos)
 	{
 		//It's a socket, connect to it
@@ -74,7 +105,7 @@ UART::UART(const std::string& devfile, int baud)
 		fflush(stdout);
 		sscanf(devfile.c_str(), "%127[^:]:%6u", host, &port);
 		//LogTrace("Connecting to %s:%d\n", host, port);
-		m_socket.Connect(host, port);
+		return m_socket.Connect(host, port);
 	}
 	else
 	{
@@ -83,7 +114,7 @@ UART::UART(const std::string& devfile, int baud)
 		(const void)baud;
 		m_fd = INVALID_HANDLE_VALUE;
 		LogError("Windows UART stuff not implemented");
-		return;
+		return false;
 	#else
 		//Open the UART
 		//LogTrace("Opening TTY %s\n", devfile.c_str());
@@ -91,7 +122,7 @@ UART::UART(const std::string& devfile, int baud)
 		if(m_fd < 0)
 		{
 			LogError("Could not open UART file %s\n", devfile.c_str());
-			return;
+			return false;
 		}
 
 		//Set flags
@@ -107,12 +138,12 @@ UART::UART(const std::string& devfile, int baud)
 		if(0 != tcflush(m_fd, TCIFLUSH))
 		{
 			LogError("Fail to flush tty\n");
-			return;
+			return false;
 		}
 		if(0 != ioctl(m_fd, TCSETS2, &flags))
 		{
 			LogError("Fail to set attr\n");
-			return;
+			return false;
 		}
 
 		/*
@@ -133,18 +164,23 @@ UART::UART(const std::string& devfile, int baud)
 		*/
 	#endif
 	}
+
+	return true;
 }
 
 /**
 	@brief Disconnects from the serial port
  */
-UART::~UART()
+void UART::Close()
 {
+	if (m_networked)
+		return m_socket.Close();
+
 #ifdef _WIN32
 	//TODO
 #else
 	close(m_fd);
-	m_fd = 0;
+	m_fd = -1;
 #endif
 }
 

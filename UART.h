@@ -57,7 +57,10 @@ class UART
 {
 public:
 
+	UART();
 	UART(const std::string& devfile, int baud);
+	virtual bool Connect(const std::string& devfile, int baud);
+	virtual void Close();
 	virtual ~UART();
 
 	bool Read(unsigned char* data, int len);
@@ -65,6 +68,12 @@ public:
 
 	FILE_DESCRIPTOR GetHandle()
 	{ return m_fd; }
+
+	bool IsValid() const
+	{
+		if (m_networked) return m_socket.IsValid();
+		return (m_fd >= 0);
+	}
 
 protected:
 	bool m_networked;
