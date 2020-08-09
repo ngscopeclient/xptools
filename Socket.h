@@ -103,6 +103,10 @@ public:
 	bool SetRxTimeout(unsigned int microSeconds);
 	bool SetTxTimeout(unsigned int microSeconds);
 
+	//Set buffer sizes
+	bool SetTxBuffer(int bufsize);
+	bool SetRxBuffer(int bufsize);
+
 	/**
 		@brief Convert us to the native OS socket type
 		@return A reference to our socket handle

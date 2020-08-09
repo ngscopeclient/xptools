@@ -84,9 +84,9 @@ void Socket::Open()
  */
 Socket::Socket(ZSOCKET sock, int af)
 	: m_af(af)
-	, m_socket(sock)
 	, m_rxtimeout(0)
 	, m_txtimeout(0)
+	, m_socket(sock)
 {
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
@@ -308,8 +308,12 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	clock_t start = clock();
 	clock_t end = CLOCKS_PER_SEC / 1000000 * m_rxtimeout;
 
-	while( (x = recv(m_socket, (char*)p, bytes_left, 0)) > 0)
+	while(true)
 	{
+		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
+		if(x < 0)
+			break;
+
 		bytes_left -= x;
 		p += x;
 		if(bytes_left == 0)
@@ -334,6 +338,20 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	}
 
 	return bytes_left == 0;
+}
+
+bool Socket::SetTxBuffer(int bufsize)
+{
+	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_SNDBUF, (char*)&bufsize, sizeof(bufsize)))
+		return false;
+	return true;
+}
+
+bool Socket::SetRxBuffer(int bufsize)
+{
+	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(bufsize)))
+		return false;
+	return true;
 }
 
 /**
