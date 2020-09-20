@@ -72,7 +72,7 @@ UART::UART(const std::string& devfile, int baud)
  */
 UART::UART()
 	: m_networked(false)
-	, m_fd(-1)
+	, m_fd(INVALID_FILE_DESCRIPTOR)
 	, m_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 {
 }
@@ -180,8 +180,9 @@ void UART::Close()
 	//TODO
 #else
 	close(m_fd);
-	m_fd = -1;
 #endif
+
+	m_fd = INVALID_FILE_DESCRIPTOR;
 }
 
 bool UART::Read(unsigned char* data, int len)

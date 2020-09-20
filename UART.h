@@ -43,10 +43,12 @@
 #ifdef _WIN32
 
 typedef HANDLE FILE_DESCRIPTOR;
+#define INVALID_FILE_DESCRIPTOR INVALID_HANDLE_VALUE
 
 #else
 
 typedef int FILE_DESCRIPTOR;
+#define INVALID_FILE_DESCRIPTOR -1
 
 #endif
 
@@ -71,8 +73,10 @@ public:
 
 	bool IsValid() const
 	{
-		if (m_networked) return m_socket.IsValid();
-		return (m_fd >= 0);
+		if (m_networked)
+			return m_socket.IsValid();
+
+		return (m_fd != INVALID_FILE_DESCRIPTOR);
 	}
 
 protected:
