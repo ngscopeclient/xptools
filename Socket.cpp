@@ -236,7 +236,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 
 	if(x < 0)
 	{
-		LogWarning("Socket write failed\n");
+		LogWarning("Socket write failed (errno=%d)\n", errno);
 		return false;
 	}
 	else if(x == 0)
@@ -328,7 +328,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 
 	if(x < 0)
 	{
-		LogWarning("Socket read failed\n");
+		LogWarning("Socket read failed (errno=%d)\n", errno);
 		return false;
 	}
 	else if(x == 0)
