@@ -122,10 +122,10 @@ public:
 #endif
 	}
 
-	virtual void Close();
+	void Close();
 
 protected:
-	virtual void Open();
+	void Open();
 
 	/**
 		@brief Address family of this socket (typically AF_INET or AF_INET6)
