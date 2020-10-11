@@ -61,8 +61,8 @@ public:
 
 	UART();
 	UART(const std::string& devfile, int baud);
-	virtual bool Connect(const std::string& devfile, int baud);
-	virtual void Close();
+	bool Connect(const std::string& devfile, int baud);
+	void Close();
 	virtual ~UART();
 
 	bool Read(unsigned char* data, int len);

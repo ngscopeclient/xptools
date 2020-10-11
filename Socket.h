@@ -70,31 +70,31 @@ public:
 	virtual ~Socket(void);
 
 	//Connect to a host (automatic DNS resolution)
-	virtual bool Connect(const std::string& host, uint16_t port);
+	bool Connect(const std::string& host, uint16_t port);
 
 	//Bind to a port (any available interface)
-	virtual bool Bind(unsigned short port);
+	bool Bind(unsigned short port);
 
 	//Put us in listening mode
-	virtual bool Listen();
+	bool Listen();
 
 	//Accept a new connection
-	virtual Socket Accept(sockaddr_in* addr, ZSOCKLEN len);
-	virtual Socket Accept(sockaddr_in6* addr, ZSOCKLEN len);
-	virtual Socket Accept();
+	Socket Accept(sockaddr_in* addr, ZSOCKLEN len);
+	Socket Accept(sockaddr_in6* addr, ZSOCKLEN len);
+	Socket Accept();
 
 	//Disconnect us from the socket object
-	virtual ZSOCKET Detach();
+	ZSOCKET Detach();
 
 	//Send / receive rawdata
-	virtual bool SendLooped(const unsigned char* buf, int count);
-	virtual bool RecvLooped(unsigned char* buf, int len);
+	bool SendLooped(const unsigned char* buf, int count);
+	bool RecvLooped(unsigned char* buf, int len);
 	//size_t RecvFrom(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 	//size_t SendTo(void* buf, size_t len, sockaddr_in& addr, int flags = 0);
 
 	//Send/receive a string
-	virtual bool RecvPascalString(std::string& str);
-	virtual bool SendPascalString(const std::string& str);
+	bool RecvPascalString(std::string& str);
+	bool SendPascalString(const std::string& str);
 
 	//Set TCP_NODELAY on our socket
 	bool DisableNagle();
