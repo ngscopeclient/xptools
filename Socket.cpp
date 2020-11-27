@@ -583,7 +583,7 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
 	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
 
-	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, (const char*)timeout, sizeof(DWORD)))
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_RCVTIMEO, (const char*)&timeout, sizeof(DWORD)))
 		return false;
 #else
 	struct timeval tv;
@@ -604,7 +604,7 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
 	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
 
-	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, (const char*)timeout, sizeof(DWORD)))
+	if(0 != setsockopt((ZSOCKET)m_socket, m_type, SO_SNDTIMEO, (const char*)&timeout, sizeof(DWORD)))
 		return false;
 #else
 	struct timeval tv;
