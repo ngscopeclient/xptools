@@ -99,6 +99,9 @@ public:
 	//Set TCP_NODELAY on our socket
 	bool DisableNagle();
 
+	//Set TCP_QUICKACK on our socket
+	bool DisableDelayedACK();
+
 	//Set RX/TX timeouts
 	bool SetRxTimeout(unsigned int microSeconds);
 	bool SetTxTimeout(unsigned int microSeconds);

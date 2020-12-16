@@ -577,6 +577,20 @@ bool Socket::DisableNagle()
 	return true;
 }
 
+/**
+	@brief Disable delayed-ACK so that we send ACKs immediately upon packet receipt
+
+	@return true on success, false on fail
+ */
+bool Socket::DisableDelayedACK()
+{
+	int flag = 1;
+	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_QUICKACK, (char*)&flag, sizeof(flag)))
+		return false;
+
+	return true;
+}
+
 bool Socket::SetRxTimeout(unsigned int microSeconds)
 {
 #ifdef _WIN32
