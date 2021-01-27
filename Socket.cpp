@@ -311,7 +311,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	while(true)
 	{
 		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
-		if(x < 0)
+		if(x <= 0)
 			break;
 
 		bytes_left -= x;
@@ -632,4 +632,10 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 
 	m_txtimeout = microSeconds;
 	return true;
+}
+
+Socket& Socket::operator=(ZSOCKET rhs)
+{
+	m_socket = rhs;
+	return *this;
 }

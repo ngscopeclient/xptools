@@ -125,6 +125,8 @@ public:
 #endif
 	}
 
+	Socket& operator=(ZSOCKET rhs);
+
 	void Close();
 
 protected:
