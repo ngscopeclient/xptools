@@ -52,11 +52,7 @@ using namespace std;
 	@param protocol Protocol of the socket (layer 4 protocol selection)
  */
 Socket::Socket(int af, int type, int protocol)
-	: m_af(af)
-	, m_type(type)
-	, m_protocol(protocol)
-	, m_rxtimeout(0)
-	, m_txtimeout(0)
+	: m_af(af), m_type(type), m_protocol(protocol), m_rxtimeout(0), m_txtimeout(0)
 {
 #ifdef _WIN32
 	WSADATA wdat;
@@ -82,11 +78,7 @@ void Socket::Open()
 	@param sock Socket to encapsulate
 	@param af Address family of the provided socket
  */
-Socket::Socket(ZSOCKET sock, int af)
-	: m_af(af)
-	, m_rxtimeout(0)
-	, m_txtimeout(0)
-	, m_socket(sock)
+Socket::Socket(ZSOCKET sock, int af) : m_af(af), m_rxtimeout(0), m_txtimeout(0), m_socket(sock)
 {
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
@@ -227,7 +219,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		if(bytes_left == 0)
 			break;
 
-		if( (m_rxtimeout > 0) && ((int)(clock() - start) < end) )
+		if((m_rxtimeout > 0) && ((int)(clock() - start) < end))
 		{
 			LogWarning("send timeout\n");
 			return false;
@@ -236,7 +228,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 
 	if(x < 0)
 	{
-                LogWarning("Socket write failed (errno=%d, %s)\n", errno,strerror(errno));
+		LogWarning("Socket write failed (errno=%d, %s)\n", errno, strerror(errno));
 		return false;
 	}
 	else if(x == 0)
@@ -319,7 +311,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 		if(bytes_left == 0)
 			break;
 
-		if( (m_rxtimeout > 0) && ( ((int)(clock() - start) > end) ) )
+		if((m_rxtimeout > 0) && (((int)(clock() - start) > end)))
 		{
 			LogWarning("Socket read timed out\n");
 			return false;
@@ -328,7 +320,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 
 	if(x < 0)
 	{
-                LogWarning("Socket read failed (errno=%d, %s)\n", errno,strerror(errno));
+		LogWarning("Socket read failed (errno=%d, %s)\n", errno, strerror(errno));
 		return false;
 	}
 	else if(x == 0)
@@ -347,9 +339,10 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
  */
 void Socket::FlushRxBuffer(void)
 {
-        /* Why oh why has this never been made a SO_ ? */
-        char dummyBuffer[2000];
-        while(recv(m_socket, dummyBuffer, sizeof(dummyBuffer), MSG_DONTWAIT)>0);
+	/* Why oh why has this never been made a SO_ ? */
+	char dummyBuffer[2000];
+	while(recv(m_socket, dummyBuffer, sizeof(dummyBuffer), MSG_DONTWAIT) > 0)
+		;
 }
 
 bool Socket::SetTxBuffer(int bufsize)
@@ -616,8 +609,8 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 		return false;
 #else
 	struct timeval tv;
-	tv.tv_sec = microSeconds/1000000;
-	tv.tv_usec = (suseconds_t)(microSeconds%1000000);
+	tv.tv_sec = microSeconds / 1000000;
+	tv.tv_usec = (suseconds_t)(microSeconds % 1000000);
 
 	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)))
 		return false;
@@ -636,8 +629,8 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 		return false;
 #else
 	struct timeval tv;
-	tv.tv_sec = microSeconds/1000000;
-	tv.tv_usec = (suseconds_t)(microSeconds%1000000);
+	tv.tv_sec = microSeconds / 1000000;
+	tv.tv_usec = (suseconds_t)(microSeconds % 1000000);
 	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)))
 		return false;
 #endif
