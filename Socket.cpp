@@ -236,7 +236,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 
 	if(x < 0)
 	{
-		LogWarning("Socket write failed (errno=%d)\n", errno);
+                LogWarning("Socket write failed (errno=%d, %s)\n", errno,strerror(errno));
 		return false;
 	}
 	else if(x == 0)
@@ -328,7 +328,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 
 	if(x < 0)
 	{
-		LogWarning("Socket read failed (errno=%d)\n", errno);
+                LogWarning("Socket read failed (errno=%d, %s)\n", errno,strerror(errno));
 		return false;
 	}
 	else if(x == 0)
@@ -338,6 +338,18 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	}
 
 	return bytes_left == 0;
+}
+
+/**
+	@brief Flush RX buffer
+
+	@return true on success, false on fail
+ */
+void Socket::FlushRxBuffer(void)
+{
+        /* Why oh why has this never been made a SO_ ? */
+        char dummyBuffer[2000];
+        while(recv(m_socket, dummyBuffer, sizeof(dummyBuffer), MSG_DONTWAIT)>0);
 }
 
 bool Socket::SetTxBuffer(int bufsize)
