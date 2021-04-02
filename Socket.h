@@ -86,8 +86,8 @@ public:
 	//Disconnect us from the socket object
 	ZSOCKET Detach();
 
-        // Flush the incoming socket
-        void FlushRxBuffer(void);
+	// Flush the incoming socket
+	void FlushRxBuffer(void);
 
 	//Send / receive rawdata
 	bool SendLooped(const unsigned char* buf, int count);
