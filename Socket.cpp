@@ -341,8 +341,20 @@ void Socket::FlushRxBuffer(void)
 {
 	/* Why oh why has this never been made a SO_ ? */
 	char dummyBuffer[2000];
+#ifndef _WIN32
 	while(recv(m_socket, dummyBuffer, sizeof(dummyBuffer), MSG_DONTWAIT) > 0)
 		;
+#else
+	/* Windows does not support MSG_DONTWAIT... */
+	unsigned long i;
+	while(1)
+	{
+		ioctlsocket(m_socket, FIONREAD, &i);
+		if(i == 0)
+			break;
+		recv(m_socket, dummyBuffer, (i > sizeof(dummyBuffer)) ? sizeof(dummyBuffer) : i, 0);
+	}
+#endif
 }
 
 bool Socket::SetTxBuffer(int bufsize)
