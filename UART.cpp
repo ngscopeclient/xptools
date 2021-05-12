@@ -41,12 +41,18 @@
 #ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
+
+#ifdef __linux__
 #include <asm/termios.h>
 
 //asm/termios.h seems to conflict with sys/ioctl.h and termios.h
 //so just pull these by hand
 extern "C" int tcflush (int __fd, int __queue_selector) __THROW;
 extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
+
+#else 
+#include <termios.h>
+#endif // __linux__
 
 #endif
 
@@ -125,7 +131,8 @@ bool UART::Connect(const std::string& devfile, int baud)
 			return false;
 		}
 
-		//Set flags
+		//Set flags - linux doesn't support custom bauds in termios
+#ifdef __linux__
 		termios2 flags;
 		memset(&flags, 0, sizeof(flags));
 		ioctl(m_fd, TCGETS2, &flags);
@@ -140,12 +147,33 @@ bool UART::Connect(const std::string& devfile, int baud)
 			LogError("Fail to flush tty\n");
 			return false;
 		}
+
 		if(0 != ioctl(m_fd, TCSETS2, &flags))
 		{
 			LogError("Fail to set attr\n");
 			return false;
 		}
-
+#else
+		termios flags;
+		memset(&flags, 0, sizeof(flags));
+		tcgetattr(m_fd, &flags);
+		flags.c_cflag = CS8 | CLOCAL | CREAD; 
+		flags.c_iflag = IGNBRK | IGNPAR;
+		flags.c_oflag = 0;
+		flags.c_cc[VMIN] = 1;
+		flags.c_ispeed = baud;
+		flags.c_ospeed = baud;
+		if(0 != tcflush(m_fd, TCIFLUSH))
+		{
+			LogError("Fail to flush tty\n");
+			return false;
+		}
+		if(0 != tcsetattr(m_fd, TCSANOW, &flags))
+		{
+			LogError("Fail to set attr\n");
+			return false;
+		}
+#endif
 		/*
 		//Put the file in nonblocking mode temporarily
 		int f = fcntl(m_fd, F_GETFL, 0);
