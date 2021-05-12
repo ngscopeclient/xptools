@@ -601,7 +601,7 @@ bool Socket::DisableNagle()
  */
 bool Socket::DisableDelayedACK()
 {
-#ifndef _WIN32
+#ifdef TCP_QUICKACK
 	int flag = 1;
 	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_QUICKACK, (char*)&flag, sizeof(flag)))
 		return false;
