@@ -47,6 +47,10 @@
 
 //asm/termios.h seems to conflict with sys/ioctl.h and termios.h
 //so just pull these by hand
+//define __THROW to avoid build issue when it's not available from the libc
+#ifndef __THROW
+# define __THROW
+#endif
 extern "C" int tcflush (int __fd, int __queue_selector) __THROW;
 extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 
