@@ -612,6 +612,20 @@ bool Socket::DisableDelayedACK()
 	return true;
 }
 
+/**
+	@brief Set SO_REUSEADDR on our socket, allowing binding to it again without waiting for
+	       timeout if our task crashed hard.
+
+	@return true on success, false on fail
+ */
+bool Socket::SetReuseaddr(bool on)
+{
+	int flag = on;
+    if (0 != setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag)))
+        return false;
+    return true;
+}
+
 bool Socket::SetRxTimeout(unsigned int microSeconds)
 {
 #ifdef _WIN32
