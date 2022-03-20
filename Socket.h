@@ -105,6 +105,9 @@ public:
 	//Set TCP_QUICKACK on our socket
 	bool DisableDelayedACK();
 
+	//Set SO_REUSEADDR on our socket
+	bool SetReuseaddr(bool on = true);
+
 	//Set RX/TX timeouts
 	bool SetRxTimeout(unsigned int microSeconds);
 	bool SetTxTimeout(unsigned int microSeconds);
