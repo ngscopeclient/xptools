@@ -36,6 +36,9 @@
 #ifndef HzClock_h
 #define HzClock_h
 
+#include <time.h>
+#include <deque>
+
 /**
 	@brief Clock that measures rate at which it is called; windowed average
  */
@@ -95,6 +98,15 @@ public:
 		}
 
 		return sqrt(dev / m_depth);
+	}
+
+	static double GetTime()
+	{
+		timespec t;
+		clock_gettime(CLOCK_REALTIME,&t);
+		double d = static_cast<double>(t.tv_nsec) / 1E9f;
+		d += t.tv_sec;
+		return d;
 	}
 
 protected:
