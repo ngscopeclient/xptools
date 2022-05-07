@@ -37,6 +37,7 @@
 #define HzClock_h
 
 #include <time.h>
+#include <math.h>
 #include <deque>
 
 /**
