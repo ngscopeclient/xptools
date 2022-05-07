@@ -36,7 +36,12 @@
 #ifndef HzClock_h
 #define HzClock_h
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <time.h>
+#endif
+
 #include <math.h>
 #include <deque>
 
@@ -103,11 +108,21 @@ public:
 
 	static double GetTime()
 	{
+#ifdef _WIN32
+		uint64_t tm;
+		static uint64_t freq = 0;
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tm));
+		double ret = tm;
+		if(freq == 0)
+			QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&freq));
+		return ret / freq;
+#else
 		timespec t;
 		clock_gettime(CLOCK_REALTIME,&t);
 		double d = static_cast<double>(t.tv_nsec) / 1E9f;
 		d += t.tv_sec;
 		return d;
+#endif
 	}
 
 protected:
