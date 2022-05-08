@@ -120,7 +120,7 @@ public:
 		@brief Convert us to the native OS socket type
 		@return A reference to our socket handle
 	 */
-	operator ZSOCKET&() { return m_socket; }
+	operator const ZSOCKET&() const { return m_socket; }
 
 	bool IsValid() const
 	{
