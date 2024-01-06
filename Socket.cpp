@@ -303,6 +303,13 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	while(true)
 	{
 		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
+
+		//Handle EINTR
+		#ifndef _WIN32
+		if( (x < 0) && (errno == EINTR))
+			continue;
+		#endif
+
 		if(x <= 0)
 			break;
 
