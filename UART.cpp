@@ -46,7 +46,10 @@
 #include <asm/termios.h>
 
 //asm/termios.h seems to conflict with sys/ioctl.h and termios.h
-//so just pull these by hand
+//so just pull these by hand. musl libc doesn't define __THROW so define it as blank
+#ifndef __THROW
+#define __THROW
+#endif
 extern "C" int tcflush (int __fd, int __queue_selector) __THROW;
 extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 
