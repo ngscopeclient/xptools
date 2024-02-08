@@ -119,8 +119,7 @@ bool UART::Connect(const std::string& devfile, int baud)
 	else
 	{
 	#ifdef _WIN32
-		(const void)devfile;
-		(const void)baud;
+		//TODO implement this on Windows
 		m_fd = INVALID_HANDLE_VALUE;
 		LogError("Windows UART stuff not implemented");
 		return false;
