@@ -219,7 +219,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		if(bytes_left == 0)
 			break;
 
-		if((m_rxtimeout > 0) && ((int)(clock() - start) < end))
+		if((m_rxtimeout > 0) && ((clock_t)(clock() - start) < end))
 		{
 			LogWarning("send timeout\n");
 			return false;
@@ -318,7 +318,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 		if(bytes_left == 0)
 			break;
 
-		if((m_rxtimeout > 0) && (((int)(clock() - start) > end)))
+		if((m_rxtimeout > 0) && (((clock_t)(clock() - start) > end)))
 		{
 			LogWarning("Socket read timed out\n");
 			return false;
