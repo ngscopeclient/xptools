@@ -57,6 +57,36 @@ extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 #include <termios.h>
 #endif // __linux__
 
+#else
+#include <libserialport.h>
+
+/* Helper function for error handling. */
+static int check(enum sp_return result)
+{
+	char *error_message;
+	switch (result) 
+	{
+		case SP_ERR_ARG:
+			LogError("Error: Invalid argument.\n");
+			break;
+		case SP_ERR_FAIL:
+			error_message = sp_last_error_message();
+			LogError("Error: Failed: %s\n", error_message);
+			sp_free_error_message(error_message);
+			break;
+		case SP_ERR_SUPP:
+			LogError("Error: Not supported.\n");
+			break;
+		case SP_ERR_MEM:
+			LogError("Error: Couldn't allocate memory.\n");
+			break;
+		case SP_OK:
+		default:
+			break;			
+	}
+	return result;
+}
+
 #endif
 
 using namespace std;
@@ -119,10 +149,27 @@ bool UART::Connect(const std::string& devfile, int baud)
 	else
 	{
 	#ifdef _WIN32
-		//TODO implement this on Windows
-		m_fd = INVALID_HANDLE_VALUE;
-		LogError("Windows UART stuff not implemented");
-		return false;
+		int result = check(sp_get_port_by_name(devfile.c_str(), &m_fd));
+		if(result != SP_OK)
+		{
+			m_fd = INVALID_FILE_DESCRIPTOR;
+			LogError("Could not find COM port %s: error# %d.\n",devfile.c_str(),result);
+			return false;
+		}
+		result = check(sp_open(m_fd, SP_MODE_READ_WRITE));
+		if(result != SP_OK)
+		{
+			m_fd = INVALID_FILE_DESCRIPTOR;
+			LogError("Could not open COM port %s: error# %d.\n",devfile.c_str(),result);
+			return false;
+		}
+		// Configure port
+		check(sp_set_baudrate(m_fd, baud));
+		check(sp_set_bits(m_fd, 8));
+        check(sp_set_parity(m_fd, SP_PARITY_NONE));
+        check(sp_set_stopbits(m_fd, 1));
+        check(sp_set_flowcontrol(m_fd, SP_FLOWCONTROL_NONE));
+		return true;
 	#else
 		//Open the UART
 		//LogTrace("Opening TTY %s\n", devfile.c_str());
@@ -207,7 +254,8 @@ void UART::Close()
 		return m_socket.Close();
 
 #ifdef _WIN32
-	//TODO
+	check(sp_close(m_fd));
+	sp_free_port(m_fd);
 #else
 	close(m_fd);
 #endif
@@ -222,10 +270,27 @@ bool UART::Read(unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			(void)data;
-			(void)len;
-			LogError("UART stuff not implemented\n");
-			return false;
+			int x = 0;
+			while( (x = sp_nonblocking_read(m_fd, (char*)data, len)) > 0)
+			{
+				len -= x;
+				data += x;
+				if(len == 0)
+					break;
+			}
+
+			if(x < 0)
+			{
+				LogWarning("UART read failed\n");
+				return false;
+			}
+			else if(x == 0)
+			{
+				//LogWarning("Socket closed unexpectedly\n");
+				return false;
+			}
+
+			return true;
 		#else
 			int x = 0;
 			while( (x = read(m_fd, (char*)data, len)) > 0)
@@ -259,10 +324,27 @@ bool UART::Write(const unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			(void)data;
-			(void)len;
-			LogError("UART stuff not implemented\n");
-			return false;
+			int x = 0;
+			while( (x = sp_nonblocking_write(m_fd, (const char*)data, len)) > 0)
+			{
+				len -= x;
+				data += x;
+				if(len == 0)
+					break;
+			}
+
+			if(x < 0)
+			{
+				LogWarning("UART write failed\n");
+				return false;
+			}
+			else if(x == 0)
+			{
+				//LogWarning("Socket closed unexpectedly\n");
+				return false;
+			}
+
+			return true;
 		#else
 			int x = 0;
 			while( (x = write(m_fd, (const char*)data, len)) > 0)
