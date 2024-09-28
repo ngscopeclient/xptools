@@ -58,35 +58,7 @@ extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 #endif // __linux__
 
 #else
-#include <libserialport.h>
-
-/* Helper function for error handling. */
-static int check(enum sp_return result)
-{
-	char *error_message;
-	switch (result) 
-	{
-		case SP_ERR_ARG:
-			LogError("Error: Invalid argument.\n");
-			break;
-		case SP_ERR_FAIL:
-			error_message = sp_last_error_message();
-			LogError("Error: Failed: %s\n", error_message);
-			sp_free_error_message(error_message);
-			break;
-		case SP_ERR_SUPP:
-			LogError("Error: Not supported.\n");
-			break;
-		case SP_ERR_MEM:
-			LogError("Error: Couldn't allocate memory.\n");
-			break;
-		case SP_OK:
-		default:
-			break;			
-	}
-	return result;
-}
-
+#include <Windows.h>
 #endif
 
 using namespace std;
@@ -149,26 +121,61 @@ bool UART::Connect(const std::string& devfile, int baud)
 	else
 	{
 	#ifdef _WIN32
-		int result = check(sp_get_port_by_name(devfile.c_str(), &m_fd));
-		if(result != SP_OK)
+		m_fd = CreateFileA(devfile.c_str(),			  // port name
+							GENERIC_READ | GENERIC_WRITE, // Read/Write
+							0,                            // No Sharing
+							NULL,                         // No Security
+							OPEN_EXISTING,// Open existing port only
+							0,            // Non Overlapped I/O
+							NULL);        // Null for Comm Devices
+
+		if (m_fd == INVALID_HANDLE_VALUE)
 		{
-			m_fd = INVALID_FILE_DESCRIPTOR;
-			LogError("Could not find COM port %s: error# %d.\n",devfile.c_str(),result);
+			LogError("Could not open COM port %s\n", devfile.c_str());
 			return false;
 		}
-		result = check(sp_open(m_fd, SP_MODE_READ_WRITE));
-		if(result != SP_OK)
+		else
 		{
-			m_fd = INVALID_FILE_DESCRIPTOR;
-			LogError("Could not open COM port %s: error# %d.\n",devfile.c_str(),result);
-			return false;
+			LogError("Twingo !");
 		}
 		// Configure port
-		check(sp_set_baudrate(m_fd, baud));
-		check(sp_set_bits(m_fd, 8));
-        check(sp_set_parity(m_fd, SP_PARITY_NONE));
-        check(sp_set_stopbits(m_fd, 1));
-        check(sp_set_flowcontrol(m_fd, SP_FLOWCONTROL_NONE));
+		DCB dcbSerialParams; // Initializing DCB structure
+		SecureZeroMemory(&dcbSerialParams, sizeof(DCB));
+   		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+		// Read current config
+		bool result = GetCommState(m_fd, &dcbSerialParams);
+		if(!result)
+		{
+			LogError("Could not get state for COM port %s\n", devfile.c_str());
+			return false;
+		}
+		// Set values
+		dcbSerialParams.BaudRate = baud;  		// Setting BaudRate
+		dcbSerialParams.ByteSize = 8;         	// Setting ByteSize = 8
+		dcbSerialParams.StopBits = ONESTOPBIT;	// Setting StopBits = 1
+		dcbSerialParams.Parity   = NOPARITY;  	// Setting Parity = None
+		// Set port configuration
+		result = SetCommState(m_fd, &dcbSerialParams);
+		if(!result)
+		{
+			LogError("Could not set state for COM port %s\n", devfile.c_str());
+			return false;
+		}
+		// Set timeouts
+		COMMTIMEOUTS timeouts;
+		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
+		timeouts.ReadIntervalTimeout        = 50; // in milliseconds
+		timeouts.ReadTotalTimeoutConstant   = 50; // in milliseconds
+		timeouts.ReadTotalTimeoutMultiplier = 10; // in milliseconds
+		timeouts.WriteTotalTimeoutConstant  = 50; // in milliseconds
+		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
+		result = SetCommTimeouts(m_fd, &timeouts);
+		if(!result)
+		{
+			LogError("Could not set timeouts for COM port %s\n", devfile.c_str());
+			return false;
+		}
+
 		return true;
 	#else
 		//Open the UART
@@ -254,8 +261,8 @@ void UART::Close()
 		return m_socket.Close();
 
 #ifdef _WIN32
-	check(sp_close(m_fd));
-	sp_free_port(m_fd);
+	// Closing the Serial Port
+	CloseHandle(m_fd);
 #else
 	close(m_fd);
 #endif
@@ -270,8 +277,12 @@ bool UART::Read(unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			int x = 0;
-			while( (x = sp_nonblocking_read(m_fd, (char*)data, len)) > 0)
+			long unsigned int x = 0;
+			while(ReadFile( 	m_fd,			//Handle of the Serial port
+             					(char*)data,    //Temporary character
+             					len,			//Size of TempChar
+             					&x,   			//Number of bytes read
+             					NULL))
 			{
 				len -= x;
 				data += x;
@@ -279,12 +290,7 @@ bool UART::Read(unsigned char* data, int len)
 					break;
 			}
 
-			if(x < 0)
-			{
-				LogWarning("UART read failed\n");
-				return false;
-			}
-			else if(x == 0)
+			if(x == 0)
 			{
 				//LogWarning("Socket closed unexpectedly\n");
 				return false;
@@ -324,8 +330,12 @@ bool UART::Write(const unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			int x = 0;
-			while( (x = sp_nonblocking_write(m_fd, (const char*)data, len)) > 0)
+			long unsigned int x = 0;
+			while(WriteFile(	m_fd,        // Handle to the Serial port
+                   				(const char*)data,     // Data to be written to the port
+                   				len,  //No of bytes to write
+                   				&x, //Bytes written
+                   				NULL))
 			{
 				len -= x;
 				data += x;
@@ -333,12 +343,7 @@ bool UART::Write(const unsigned char* data, int len)
 					break;
 			}
 
-			if(x < 0)
-			{
-				LogWarning("UART write failed\n");
-				return false;
-			}
-			else if(x == 0)
+			if(x == 0)
 			{
 				//LogWarning("Socket closed unexpectedly\n");
 				return false;
