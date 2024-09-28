@@ -134,10 +134,6 @@ bool UART::Connect(const std::string& devfile, int baud)
 			LogError("Could not open COM port %s\n", devfile.c_str());
 			return false;
 		}
-		else
-		{
-			LogError("Twingo !");
-		}
 		// Configure port
 		DCB dcbSerialParams; // Initializing DCB structure
 		SecureZeroMemory(&dcbSerialParams, sizeof(DCB));
