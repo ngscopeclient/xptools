@@ -3,5 +3,5 @@ add_library(xptools STATIC
 	UART.cpp)
 
 if(WIN32)
-target_link_libraries(xptools ws2_32 libserialport)
+target_link_libraries(xptools ws2_32)
 endif()
