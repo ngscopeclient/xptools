@@ -57,6 +57,8 @@ extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 #include <termios.h>
 #endif // __linux__
 
+#else
+#include <Windows.h>
 #endif
 
 using namespace std;
@@ -119,10 +121,58 @@ bool UART::Connect(const std::string& devfile, int baud)
 	else
 	{
 	#ifdef _WIN32
-		//TODO implement this on Windows
-		m_fd = INVALID_HANDLE_VALUE;
-		LogError("Windows UART stuff not implemented");
-		return false;
+		m_fd = CreateFileA(devfile.c_str(),			  // port name
+							GENERIC_READ | GENERIC_WRITE, // Read/Write
+							0,                            // No Sharing
+							NULL,                         // No Security
+							OPEN_EXISTING,// Open existing port only
+							0,            // Non Overlapped I/O
+							NULL);        // Null for Comm Devices
+
+		if (m_fd == INVALID_HANDLE_VALUE)
+		{
+			LogError("Could not open COM port %s\n", devfile.c_str());
+			return false;
+		}
+		// Configure port
+		DCB dcbSerialParams; // Initializing DCB structure
+		SecureZeroMemory(&dcbSerialParams, sizeof(DCB));
+   		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+		// Read current config
+		bool result = GetCommState(m_fd, &dcbSerialParams);
+		if(!result)
+		{
+			LogError("Could not get state for COM port %s\n", devfile.c_str());
+			return false;
+		}
+		// Set values
+		dcbSerialParams.BaudRate = baud;  		// Setting BaudRate
+		dcbSerialParams.ByteSize = 8;         	// Setting ByteSize = 8
+		dcbSerialParams.StopBits = ONESTOPBIT;	// Setting StopBits = 1
+		dcbSerialParams.Parity   = NOPARITY;  	// Setting Parity = None
+		// Set port configuration
+		result = SetCommState(m_fd, &dcbSerialParams);
+		if(!result)
+		{
+			LogError("Could not set state for COM port %s\n", devfile.c_str());
+			return false;
+		}
+		// Set timeouts
+		COMMTIMEOUTS timeouts;
+		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
+		timeouts.ReadIntervalTimeout        = 50; // in milliseconds
+		timeouts.ReadTotalTimeoutConstant   = 50; // in milliseconds
+		timeouts.ReadTotalTimeoutMultiplier = 10; // in milliseconds
+		timeouts.WriteTotalTimeoutConstant  = 50; // in milliseconds
+		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
+		result = SetCommTimeouts(m_fd, &timeouts);
+		if(!result)
+		{
+			LogError("Could not set timeouts for COM port %s\n", devfile.c_str());
+			return false;
+		}
+
+		return true;
 	#else
 		//Open the UART
 		//LogTrace("Opening TTY %s\n", devfile.c_str());
@@ -207,7 +257,8 @@ void UART::Close()
 		return m_socket.Close();
 
 #ifdef _WIN32
-	//TODO
+	// Closing the Serial Port
+	CloseHandle(m_fd);
 #else
 	close(m_fd);
 #endif
@@ -222,10 +273,26 @@ bool UART::Read(unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			(void)data;
-			(void)len;
-			LogError("UART stuff not implemented\n");
-			return false;
+			long unsigned int x = 0;
+			while(ReadFile( 	m_fd,			//Handle of the Serial port
+             					(char*)data,    //Temporary character
+             					len,			//Size of TempChar
+             					&x,   			//Number of bytes read
+             					NULL))
+			{
+				len -= x;
+				data += x;
+				if(len == 0)
+					break;
+			}
+
+			if(x == 0)
+			{
+				//LogWarning("Socket closed unexpectedly\n");
+				return false;
+			}
+
+			return true;
 		#else
 			int x = 0;
 			while( (x = read(m_fd, (char*)data, len)) > 0)
@@ -259,10 +326,26 @@ bool UART::Write(const unsigned char* data, int len)
 	else
 	{
 		#ifdef _WIN32
-			(void)data;
-			(void)len;
-			LogError("UART stuff not implemented\n");
-			return false;
+			long unsigned int x = 0;
+			while(WriteFile(	m_fd,        // Handle to the Serial port
+                   				(const char*)data,     // Data to be written to the port
+                   				len,  //No of bytes to write
+                   				&x, //Bytes written
+                   				NULL))
+			{
+				len -= x;
+				data += x;
+				if(len == 0)
+					break;
+			}
+
+			if(x == 0)
+			{
+				//LogWarning("Socket closed unexpectedly\n");
+				return false;
+			}
+
+			return true;
 		#else
 			int x = 0;
 			while( (x = write(m_fd, (const char*)data, len)) > 0)
