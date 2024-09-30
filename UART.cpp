@@ -160,9 +160,9 @@ bool UART::Connect(const std::string& devfile, int baud)
 		// Set timeouts
 		COMMTIMEOUTS timeouts;
 		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
-		timeouts.ReadIntervalTimeout        = 50; // in milliseconds
-		timeouts.ReadTotalTimeoutConstant   = 50; // in milliseconds
-		timeouts.ReadTotalTimeoutMultiplier = 10; // in milliseconds
+		timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
+		timeouts.ReadTotalTimeoutConstant   = 500;// Total timeout for a read operation (in milliseconds)
+		timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
 		timeouts.WriteTotalTimeoutConstant  = 50; // in milliseconds
 		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
 		result = SetCommTimeouts(m_fd, &timeouts);
@@ -278,7 +278,8 @@ bool UART::Read(unsigned char* data, int len)
              					(char*)data,    //Temporary character
              					len,			//Size of TempChar
              					&x,   			//Number of bytes read
-             					NULL))
+             					NULL) 
+								&& (x != 0))	// Stop when stream is empty
 			{
 				len -= x;
 				data += x;
