@@ -86,35 +86,50 @@ bool HID::Connect(unsigned short vendorId, unsigned short productId, const char*
 		mbstowcs (serialWc, serialNumber, cSize);
 	}
 
+	// Initialize the hidapi library
+	int res = hid_init();
+	if(res < 0)
+	{
+		LogWarning("HID init failed with error %d\n",res);
+		return false;
+	}
+
 	m_handle = hid_open(vendorId, productId, serialNumber ? serialWc : NULL);
 	if (!m_handle) {
 		LogError("Could not open HID device %x:%x:%s\n",vendorId,productId,serialNumber);
 		hid_exit();
 		return false;
 	}
+
+	/*res = hid_set_nonblocking(m_handle,true);
+	if (res < 0)
+	{
+		LogWarning("HID set non blocking failed with error %d : %ls\n",res,hid_error(m_handle));
+		return false;
+	}*/
+
 	#define MAX_STR 255
 	wchar_t wstr[MAX_STR];
 	// Read the Manufacturer String
 	wstr[0] = 0x0000;
-	int res = hid_get_manufacturer_string(m_handle, wstr, MAX_STR);
+	res = hid_get_manufacturer_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read manufacturer string\n");
-	LogError("Manufacturer String: %ls\n", wstr);
+	LogDebug("Manufacturer String: %ls\n", wstr);
 
 	// Read the Product String
 	wstr[0] = 0x0000;
 	res = hid_get_product_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read product string\n");
-	LogError("Product String: %ls\n", wstr);
+	LogDebug("Product String: %ls\n", wstr);
 
 	// Read the Serial Number String
 	wstr[0] = 0x0000;
 	res = hid_get_serial_number_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read serial number string\n");
-	LogError("Serial Number String: (%d) %ls\n", wstr[0], wstr);
-
+	LogDebug("Serial Number String: (%d) %ls\n", wstr[0], wstr);
 	return true;
 }
 
@@ -130,19 +145,11 @@ void HID::Close()
 }
 
 bool HID::Read(unsigned char* data, int len)
-{
-	int x = 0;
-	while( (x = hid_read(m_handle, data, len)) > 0)
-	{
-		len -= x;
-		data += x;
-		if(len == 0)
-			break;
-	}
-
+{	// HID report has to be read all at once
+	int x = hid_read(m_handle, data, len);
 	if(x < 0)
 	{
-		LogWarning("UART read failed\n");
+		LogWarning("HID read failed with error %d : %ls\n",x,hid_error(m_handle));
 		return false;
 	}
 	else if(x == 0)
@@ -157,19 +164,11 @@ bool HID::Read(unsigned char* data, int len)
 bool HID::Write(const unsigned char* data, int len)
 {
 	int x = 0;
-	while((x = hid_write(	m_handle,   // Handle to the Serial port
-							data,     	// Data to be written to the port
-							len)) > 0)  //No of bytes to write
-	{
-		len -= x;
-		data += x;
-		if(len == 0)
-			break;
-	}
-
+	// Send report all at once
+	x = hid_write(m_handle, data, len);
 	if(x < 0)
 	{
-		LogWarning("HID write failed\n");
+		LogWarning("HID write failed with error %d : %ls\n",x,hid_error(m_handle));
 		return false;
 	}
 	else if(x == 0)
