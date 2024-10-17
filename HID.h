@@ -42,7 +42,7 @@
 
 
 /**
-	@brief Wrapper class for a serial port
+	@brief Wrapper class for a USB HID connection
  */
 class HID
 {
@@ -53,11 +53,20 @@ public:
 	void Close();
 	virtual ~HID();
 
-	bool Read(unsigned char* data, int len);
-	bool Write(const unsigned char* data, int len);
+	int Read(unsigned char* data, int len);
+	int Write(const unsigned char* data, int len);
 
 	hid_device* GetHandle()
 	{ return m_handle; }
+
+	std::string GetManufacturerName()
+	{ return m_manufacturerName; }
+
+	std::string GetProductName()
+	{ return m_productName; }
+
+	std::string GetSerialNumber()
+	{ return m_serialNumber; }
 
 	bool IsValid() const
 	{
@@ -66,6 +75,9 @@ public:
 
 protected:
 	hid_device* m_handle;
+	std::string m_manufacturerName;
+	std::string m_productName;
+	std::string m_serialNumber;
 };
 
 #endif

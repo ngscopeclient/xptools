@@ -90,7 +90,7 @@ bool HID::Connect(unsigned short vendorId, unsigned short productId, const char*
 	int res = hid_init();
 	if(res < 0)
 	{
-		LogWarning("HID init failed with error %d\n",res);
+		LogError("HID init failed with error %d\n",res);
 		return false;
 	}
 
@@ -101,35 +101,44 @@ bool HID::Connect(unsigned short vendorId, unsigned short productId, const char*
 		return false;
 	}
 
-	/*res = hid_set_nonblocking(m_handle,true);
-	if (res < 0)
-	{
-		LogWarning("HID set non blocking failed with error %d : %ls\n",res,hid_error(m_handle));
-		return false;
-	}*/
-
 	#define MAX_STR 255
 	wchar_t wstr[MAX_STR];
 	// Read the Manufacturer String
 	wstr[0] = 0x0000;
+	std::wstring ws;
 	res = hid_get_manufacturer_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read manufacturer string\n");
-	LogDebug("Manufacturer String: %ls\n", wstr);
+	else
+	{
+		LogDebug("Manufacturer String: %ls\n", wstr);
+		ws = std::wstring(wstr);
+		m_manufacturerName = std::string(ws.begin(), ws.end());
+	}
 
 	// Read the Product String
 	wstr[0] = 0x0000;
 	res = hid_get_product_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read product string\n");
-	LogDebug("Product String: %ls\n", wstr);
+	else
+	{
+		LogDebug("Product String: %ls\n", wstr);
+		ws = std::wstring(wstr);
+		m_productName = std::string(ws.begin(), ws.end());
+	}
 
 	// Read the Serial Number String
 	wstr[0] = 0x0000;
 	res = hid_get_serial_number_string(m_handle, wstr, MAX_STR);
 	if (res < 0)
 		LogError("Unable to read serial number string\n");
-	LogDebug("Serial Number String: (%d) %ls\n", wstr[0], wstr);
+	else
+	{
+		LogDebug("Serial Number String: (%d) %ls\n", wstr[0], wstr);
+		ws = std::wstring(wstr);
+		m_serialNumber = std::string(ws.begin(), ws.end());
+	}
 	return true;
 }
 
@@ -144,38 +153,24 @@ void HID::Close()
 	m_handle = NULL;
 }
 
-bool HID::Read(unsigned char* data, int len)
+int HID::Read(unsigned char* data, int len)
 {	// HID report has to be read all at once
 	int x = hid_read(m_handle, data, len);
 	if(x < 0)
 	{
-		LogWarning("HID read failed with error %d : %ls\n",x,hid_error(m_handle));
-		return false;
+		LogError("HID read failed with error %d : %ls\n",x,hid_error(m_handle));
 	}
-	else if(x == 0)
-	{
-		//LogWarning("Communication closed unexpectedly\n");
-		return false;
-	}
-
-	return true;
+	return x;
 }
 
-bool HID::Write(const unsigned char* data, int len)
+int HID::Write(const unsigned char* data, int len)
 {
 	int x = 0;
 	// Send report all at once
 	x = hid_write(m_handle, data, len);
 	if(x < 0)
 	{
-		LogWarning("HID write failed with error %d : %ls\n",x,hid_error(m_handle));
-		return false;
+		LogError("HID write failed with error %d : %ls\n",x,hid_error(m_handle));
 	}
-	else if(x == 0)
-	{
-		//LogWarning("Communication closed unexpectedly\n");
-		return false;
-	}
-
-	return true;
+	return x;
 }
