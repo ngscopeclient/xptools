@@ -38,8 +38,11 @@
 
 #include "../log/log.h"
 #include <string>
+#ifdef __APPLE__
+#include <hidapi.h>
+#else
 #include <hidapi/hidapi.h>
-
+#endif
 
 /**
 	@brief Wrapper class for a USB HID connection
