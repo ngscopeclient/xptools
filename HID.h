@@ -39,7 +39,7 @@
 #include "../log/log.h"
 #include <string>
 #ifdef __APPLE__
-#include <hidapi.h>
+#include "hidapi.h"
 #else
 #include <hidapi/hidapi.h>
 #endif
