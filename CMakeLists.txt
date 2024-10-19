@@ -5,7 +5,7 @@ add_library(xptools STATIC
 
 if(UNIX AND NOT APPLE)
 	# hidapi-config.cmake not provided by ubuntu usbapi package
-	target_link_libraries(xptools hidapi::hidraw)
+	target_link_libraries(xptools hidapi)
 else()
 	find_package(hidapi REQUIRED)
 	target_link_libraries(xptools hidapi::hidapi)
