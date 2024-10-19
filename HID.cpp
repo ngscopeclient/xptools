@@ -62,15 +62,13 @@ HID::~HID() {
 	If @p serial_number is NULL, the first device with the
 	specified VID and PID is opened.
 
-	@ingroup API
 	@param vendorId The Vendor ID (VID) of the device to open.
 	@param productId The Product ID (PID) of the device to open.
 	@param serialNumber The Serial Number of the device to open
 							(Optionally NULL).
 
 	@returns
-		This function returns a pointer to a #hid_device object on
-		success or NULL on failure.
+		This function returns true if the device could be connected, false otherwise.
 */
 bool HID::Connect(unsigned short vendorId, unsigned short productId, const char* serialNumber)
 {
