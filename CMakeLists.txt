@@ -3,8 +3,13 @@ add_library(xptools STATIC
 	UART.cpp
 	HID.cpp)
 
-find_package(HIDAPI REQUIRED)
-target_link_libraries(xptools hidapi::hidapi)
+if(UNIX AND NOT APPLE)
+	# hidapi-config.cmake not provided by ubuntu usbapi package
+	target_link_libraries(xptools hidapi::hidapi)
+else()
+	find_package(hidapi REQUIRED)
+	target_link_libraries(xptools hidapi::hidapi)
+endif()
 
 if(WIN32)
 target_link_libraries(xptools ws2_32)
