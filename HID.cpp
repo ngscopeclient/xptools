@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* ANTIKERNEL                                                                                                           *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2024 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -52,7 +52,8 @@ HID::HID() : m_handle(NULL)
 /**
 	@brief Destructor
  */
-HID::~HID() {
+HID::~HID()
+{
 	Close();
 }
 
@@ -152,7 +153,8 @@ void HID::Close()
 }
 
 int HID::Read(unsigned char* data, int len)
-{	// HID report has to be read all at once
+{
+	// HID report has to be read all at once
 	int x = hid_read(m_handle, data, len);
 	if(x < 0)
 	{
