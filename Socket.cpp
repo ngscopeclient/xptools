@@ -304,9 +304,9 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	{
 		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
 
-		//Handle EINTR
+		//Handle EINTR and EAGAIN
 		#ifndef _WIN32
-		if( (x < 0) && (errno == EINTR))
+		if((x < 0) && (errno == EINTR) && (errno == EAGAIN))
 			continue;
 		#endif
 
