@@ -150,9 +150,9 @@ protected:
 	/// @brief Protocol of the socket
 	int m_protocol;
 
-	int m_rxtimeout;
+	double m_rxtimeout;
 
-	int m_txtimeout;
+	double m_txtimeout;
 
 	/**
 		@brief The socket handle

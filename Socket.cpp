@@ -34,7 +34,7 @@
 
 #include "Socket.h"
 #include "../log/log.h"
-#include <ctime>
+#include "TimeUtil.h"
 #include <cmath>
 #include <memory.h>
 
@@ -52,7 +52,7 @@ using namespace std;
 	@param protocol Protocol of the socket (layer 4 protocol selection)
  */
 Socket::Socket(int af, int type, int protocol)
-	: m_af(af), m_type(type), m_protocol(protocol), m_rxtimeout(0), m_txtimeout(0)
+	: m_af(af), m_type(type), m_protocol(protocol), m_rxtimeout(0.0), m_txtimeout(0.0)
 {
 #ifdef _WIN32
 	WSADATA wdat;
@@ -78,7 +78,7 @@ void Socket::Open()
 	@param sock Socket to encapsulate
 	@param af Address family of the provided socket
  */
-Socket::Socket(ZSOCKET sock, int af) : m_af(af), m_rxtimeout(0), m_txtimeout(0), m_socket(sock)
+Socket::Socket(ZSOCKET sock, int af) : m_af(af), m_rxtimeout(0.0), m_txtimeout(0.0), m_socket(sock)
 {
 	//TODO: get actual values?
 	m_type = SOCK_STREAM;
@@ -209,8 +209,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 	int bytes_left = count;
 	int x = 0;
 
-	clock_t start = clock();
-	clock_t end = CLOCKS_PER_SEC / 1000000 * m_txtimeout;
+	double start = GetTime();
 
 	while((x = send(m_socket, (const char*)p, bytes_left, 0)) > 0)
 	{
@@ -219,7 +218,7 @@ bool Socket::SendLooped(const unsigned char* buf, int count)
 		if(bytes_left == 0)
 			break;
 
-		if((m_rxtimeout > 0) && ((clock_t)(clock() - start) < end))
+		if((m_txtimeout > 0.0) && ((GetTime() - start) < m_txtimeout))
 		{
 			LogWarning("send timeout\n");
 			return false;
@@ -297,8 +296,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 	int bytes_left = len;
 	int x = 0;
 
-	clock_t start = clock();
-	clock_t end = CLOCKS_PER_SEC / 1000000 * m_rxtimeout;
+	double start = GetTime();
 
 	while(true)
 	{
@@ -306,7 +304,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 
 		//Handle EINTR and EAGAIN
 		#ifndef _WIN32
-		if((x < 0) && (errno == EINTR) && (errno == EAGAIN))
+		if((x < 0) && ((errno == EINTR) || (errno == EAGAIN)))
 			continue;
 		#endif
 
@@ -318,7 +316,7 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 		if(bytes_left == 0)
 			break;
 
-		if((m_rxtimeout > 0) && (((clock_t)(clock() - start) > end)))
+		if((m_rxtimeout > 0.0) && (((GetTime() - start) > m_rxtimeout)))
 		{
 			LogWarning("Socket read timed out\n");
 			return false;
@@ -649,7 +647,7 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 		return false;
 #endif
 
-	m_rxtimeout = microSeconds;
+	m_rxtimeout = (double)microSeconds / 1000000.0;
 	return true;
 }
 
@@ -668,7 +666,7 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 		return false;
 #endif
 
-	m_txtimeout = microSeconds;
+	m_txtimeout = (double)microSeconds / 1000000.0 ;
 	return true;
 }
 
