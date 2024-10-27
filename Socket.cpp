@@ -300,17 +300,6 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 
 	while(true)
 	{
-		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
-
-		//Handle EINTR and EAGAIN
-		#ifndef _WIN32
-		if((x < 0) && ((errno == EINTR) || (errno == EAGAIN)))
-			continue;
-		#endif
-
-		if(x <= 0)
-			break;
-
 		bytes_left -= x;
 		p += x;
 		if(bytes_left == 0)
@@ -321,6 +310,20 @@ bool Socket::RecvLooped(unsigned char* buf, int len)
 			LogWarning("Socket read timed out\n");
 			return false;
 		}
+
+		x = recv(m_socket, (char*)p, bytes_left, MSG_WAITALL);
+
+		//Handle EINTR and EAGAIN
+		#ifndef _WIN32
+		if((x < 0) && ((errno == EINTR) || (errno == EAGAIN)))
+		{
+			x = 0;
+			continue;
+		}
+		#endif
+
+		if(x <= 0)
+			break;
 	}
 
 	if(x < 0)
