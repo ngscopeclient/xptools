@@ -1,7 +1,8 @@
 add_library(xptools STATIC
 	Socket.cpp
 	UART.cpp
-	HID.cpp)
+	HID.cpp
+	TimeUtil.cpp)
 
 if(UNIX AND NOT APPLE)
 	# hidapi-config.cmake not provided by ubuntu usbapi package
