@@ -40,7 +40,7 @@
 #include <time.h>
 #endif
 
-//#include <cstdint>
+#include <cstdint>
 
 double GetTime()
 {
