@@ -150,6 +150,7 @@ bool UART::Connect(const std::string& devfile, int baud)
 		dcbSerialParams.ByteSize = 8;         	// Setting ByteSize = 8
 		dcbSerialParams.StopBits = ONESTOPBIT;	// Setting StopBits = 1
 		dcbSerialParams.Parity   = NOPARITY;  	// Setting Parity = None
+		dcbSerialParams.fDtrControl = DTR_CONTROL_ENABLE;	// Needed by some devices like the NanoVNA to communicate
 		// Set port configuration
 		result = SetCommState(m_fd, &dcbSerialParams);
 		if(!result)
