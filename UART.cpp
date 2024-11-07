@@ -101,10 +101,11 @@ UART::~UART() {
 
 	@throw JtagException on failure
 
-	@param devfile 	The device file
-	@param baud		Baud rate to use (in bits per second)
+	@param devfile 		The device file
+	@param baud			Baud rate to use (in bits per second)
+	@param dtrEnable	True if DTR line should be enabled (needed by some devices like the NanoVNA to communicate)
  */
-bool UART::Connect(const std::string& devfile, int baud)
+bool UART::Connect(const std::string& devfile, int baud, bool dtrEnable)
 {
 	if(devfile.find(":") != string::npos)
 	{
@@ -150,6 +151,8 @@ bool UART::Connect(const std::string& devfile, int baud)
 		dcbSerialParams.ByteSize = 8;         	// Setting ByteSize = 8
 		dcbSerialParams.StopBits = ONESTOPBIT;	// Setting StopBits = 1
 		dcbSerialParams.Parity   = NOPARITY;  	// Setting Parity = None
+		if(dtrEnable)
+			dcbSerialParams.fDtrControl = DTR_CONTROL_ENABLE;	// Needed by some devices like the NanoVNA to communicate
 		// Set port configuration
 		result = SetCommState(m_fd, &dcbSerialParams);
 		if(!result)
