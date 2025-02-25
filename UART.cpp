@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* xptools                                                                                                              *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2025 Andrew D. Zonenberg and contributors                                                         *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -33,7 +33,6 @@
 	@brief Implementation of UART
  */
 
-//#include "jtaghal.h"
 #include "UART.h"
 #include <stdio.h>
 #include <memory.h>
@@ -53,7 +52,7 @@
 extern "C" int tcflush (int __fd, int __queue_selector) __THROW;
 extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 
-#else 
+#else
 #include <termios.h>
 #endif // __linux__
 
@@ -212,7 +211,7 @@ bool UART::Connect(const std::string& devfile, int baud, bool dtrEnable)
 		termios flags;
 		memset(&flags, 0, sizeof(flags));
 		tcgetattr(m_fd, &flags);
-		flags.c_cflag = CS8 | CLOCAL | CREAD; 
+		flags.c_cflag = CS8 | CLOCAL | CREAD;
 		flags.c_iflag = IGNBRK | IGNPAR;
 		flags.c_oflag = 0;
 		flags.c_cc[VMIN] = 1;
@@ -281,7 +280,7 @@ bool UART::Read(unsigned char* data, int len)
              					(char*)data,    //Temporary character
              					len,			//Size of TempChar
              					&x,   			//Number of bytes read
-             					NULL) 
+             					NULL)
 								&& (x != 0))	// Stop when stream is empty
 			{
 				len -= x;
