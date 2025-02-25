@@ -104,7 +104,7 @@ UART::~UART() {
 	@param baud			Baud rate to use (in bits per second)
 	@param dtrEnable	True if DTR line should be enabled (needed by some devices like the NanoVNA to communicate)
  */
-bool UART::Connect(const std::string& devfile, int baud, bool dtrEnable)
+bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable)
 {
 	if(devfile.find(":") != string::npos)
 	{
