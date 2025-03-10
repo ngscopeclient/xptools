@@ -404,9 +404,17 @@ bool Socket::Bind(unsigned short port)
 		name.sin_port = htons(port);
 		addr = reinterpret_cast<sockaddr*>(&name);
 		len = sizeof(name);
-	}
-	else
-	{
+    } else {
+#ifdef _WIN32
+        // attempt to listen on dual-stack instead of v6-only
+        // don't fail if this can't be set, just listen on v6-only
+        // this option only available on Vista and later
+        // ref: https://learn.microsoft.com/en-us/windows/win32/winsock/dual-stack-sockets
+        DWORD flag = 0; // defaults to 1
+        if (0 != setsockopt((ZSOCKET)m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&flag, sizeof(DWORD)))
+            LogWarning("Can't enable dual-stack socket, listening on IPv6 only\n");
+#endif
+
 		memset(&name6, 0, sizeof(name6));
 
 		//Set port number
