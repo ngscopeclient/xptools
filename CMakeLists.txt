@@ -6,18 +6,17 @@ add_library(xptools STATIC
 
 find_package(PkgConfig MODULE REQUIRED)
 
-if(APPLE)
-	pkg_check_modules(HIDAPI IMPORTED_TARGET hidapi)
-else()
+pkg_check_modules(HIDAPI IMPORTED_TARGET hidapi)
+if(NOT HIDAPI_FOUND)
 	pkg_check_modules(HIDAPI IMPORTED_TARGET hidapi-hidraw) # look for older version too
 endif()
 if(NOT HIDAPI_FOUND)
-	message(FATAL_ERROR "Unable to find any version of hidapi-hidraw; this is required to build xptools (part of ngscopeclient).")
+	message(FATAL_ERROR "Unable to find any version of hidapi or hidapi-hidraw; this is required to build xptools (part of ngscopeclient).")
 endif()
 
-target_include_directories(xptools SYSTEM PRIVATE ${HIDAPI_INCLUDE_DIRS})
-target_link_libraries(xptools PRIVATE ${HIDAPI_LIBRARIES})
+target_include_directories(xptools SYSTEM PUBLIC ${HIDAPI_INCLUDE_DIRS})
+target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI)
 
 if(WIN32)
-target_link_libraries(xptools ws2_32)
+	target_link_libraries(xptools ws2_32)
 endif()
