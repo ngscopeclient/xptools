@@ -15,8 +15,9 @@ if(NOT HIDAPI_FOUND)
 endif()
 
 target_include_directories(xptools SYSTEM PUBLIC ${HIDAPI_INCLUDE_DIRS})
-target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI)
 
 if(WIN32)
-	target_link_libraries(xptools ws2_32)
+	target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI ws2_32)
+else()
+	target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI)
 endif()
