@@ -4,6 +4,19 @@ add_library(xptools STATIC
 	HID.cpp
 	TimeUtil.cpp)
 
+if(UNIX)
+	include(CheckStructHasMember)
+	check_struct_has_member(
+		termios
+		c_ispeed
+		termios.h
+		TERMIOS_HAS_ISPEED
+		LANGUAGE CXX)
+	if(NOT TERMIOS_HAS_ISPEED)
+		target_compile_definitions(xptools PRIVATE "USE_TERMIOS2")
+	endif()
+endif()
+
 find_package(PkgConfig MODULE REQUIRED)
 
 pkg_check_modules(HIDAPI IMPORTED_TARGET hidapi)

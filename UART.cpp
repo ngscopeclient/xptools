@@ -41,7 +41,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#ifdef __linux__
+#ifdef USE_TERMIOS2
 #include <asm/termios.h>
 
 //asm/termios.h seems to conflict with sys/ioctl.h and termios.h
@@ -186,7 +186,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		}
 
 		//Set flags - linux doesn't support custom bauds in termios
-#ifdef __linux__
+#ifdef USE_TERMIOS2
 		termios2 flags;
 		memset(&flags, 0, sizeof(flags));
 		ioctl(m_fd, TCGETS2, &flags);
