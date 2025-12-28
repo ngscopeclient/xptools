@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* ANTIKERNEL                                                                                                           *
 *                                                                                                                      *
-* Copyright (c) 2012-2023 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2025 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -49,7 +49,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <linux/sockios.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #define ZSOCKLEN socklen_t
 #define ZSOCKET int
@@ -116,6 +119,9 @@ public:
 	//Set buffer sizes
 	bool SetTxBuffer(int bufsize);
 	bool SetRxBuffer(int bufsize);
+
+	//Peek if data is ready
+	size_t GetRxBytesAvailable() const;
 
 	/**
 		@brief Convert us to the native OS socket type

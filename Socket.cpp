@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* ANTIKERNEL                                                                                                           *
 *                                                                                                                      *
-* Copyright (c) 2012-2020 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2025 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -677,4 +677,27 @@ Socket& Socket::operator=(ZSOCKET rhs)
 {
 	m_socket = rhs;
 	return *this;
+}
+
+/**
+	@brief Return the number of unread bytes in the RX buffer
+ */
+size_t Socket::GetRxBytesAvailable() const
+{
+#ifdef _WIN32
+	DWORD value;
+	DWORD bytesReturned;
+	if(0 != WSAIoctl(m_socket, FIONREAD, nullptr, 0, &value, sizeof(value), &bytesReturned, nullptr, nullptr))
+		return 0;
+	if(value < 0)
+		return 0;
+	return value;
+#else
+	int value;
+	if(0 != ioctl(m_socket, SIOCINQ, &value))
+		return 0;
+	if(value < 0)
+		return 0;
+	return value;
+#endif
 }
