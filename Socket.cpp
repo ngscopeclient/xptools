@@ -689,8 +689,6 @@ size_t Socket::GetRxBytesAvailable() const
 	DWORD bytesReturned;
 	if(0 != WSAIoctl(m_socket, FIONREAD, nullptr, 0, &value, sizeof(value), &bytesReturned, nullptr, nullptr))
 		return 0;
-	if(value < 0)
-		return 0;
 	return value;
 #else
 	int value;
