@@ -51,7 +51,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
-#include <linux/sockios.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #define ZSOCKLEN socklen_t

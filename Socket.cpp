@@ -694,7 +694,7 @@ size_t Socket::GetRxBytesAvailable() const
 	return value;
 #else
 	int value;
-	if(0 != ioctl(m_socket, SIOCINQ, &value))
+	if(0 != ioctl(m_socket, FIONREAD, &value))
 		return 0;
 	if(value < 0)
 		return 0;
