@@ -128,7 +128,25 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 	else
 	{
 	#ifdef _WIN32
-		m_fd = CreateFileA(devfile.c_str(),			  // port name
+		string win32_portname;
+
+		// Specify the COM port name using \\.\COM10
+		// this is needed for COM10 and above on windows
+		// note the escape character is also backslash
+		if(devfile.find("COM")==0){
+			// pre-append "\\.\"
+			win32_portname = R"(\\.\)" + devfile;
+		}else if(devfile.find(R"(\\.\COM)")==0){
+			// the "\\.\"" is already there
+			win32_portname = devfile;
+		}else{
+			// the name of the COM port is not valid
+			LogError("COM port name %s invalid, expected COM1 or \\\\.\\COM1\n",devfile.c_str());
+			return false;
+		}
+
+
+		m_fd = CreateFileA(win32_portname.c_str(),			  // port name
 							GENERIC_READ | GENERIC_WRITE, // Read/Write
 							0,                            // No Sharing
 							NULL,                         // No Security
@@ -138,7 +156,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 
 		if (m_fd == INVALID_HANDLE_VALUE)
 		{
-			LogError("Could not open COM port %s\n", devfile.c_str());
+			LogError("Could not open COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Configure port
@@ -149,7 +167,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		bool result = GetCommState(m_fd, &dcbSerialParams);
 		if(!result)
 		{
-			LogError("Could not get state for COM port %s\n", devfile.c_str());
+			LogError("Could not get state for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Set values
@@ -163,7 +181,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		result = SetCommState(m_fd, &dcbSerialParams);
 		if(!result)
 		{
-			LogError("Could not set state for COM port %s\n", devfile.c_str());
+			LogError("Could not set state for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Set timeouts
@@ -177,7 +195,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		result = SetCommTimeouts(m_fd, &timeouts);
 		if(!result)
 		{
-			LogError("Could not set timeouts for COM port %s\n", devfile.c_str());
+			LogError("Could not set timeouts for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 
