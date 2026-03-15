@@ -106,8 +106,12 @@ UART::~UART() {
 	@param devfile 		The device file
 	@param baud			Baud rate to use (in bits per second)
 	@param dtrEnable	True if DTR line should be enabled (needed by some devices like the NanoVNA to communicate)
+	@param txUs			Transmit timeout in microseconds (default 50,000 = 50 milliseconds)
+	@param rxUs			Recieve timeout in microseconds (default 500,000 = 500 milliseconds)
+
+	//TODO timeouts only implemented for WIN32
  */
-bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable)
+bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable, [[maybe_unused]]unsigned int txUs,[[maybe_unused]]unsigned int rxUs)
 {
 	if(devfile.find(":") != string::npos)
 	{
@@ -166,9 +170,9 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		COMMTIMEOUTS timeouts;
 		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
 		timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
-		timeouts.ReadTotalTimeoutConstant   = 500;// Total timeout for a read operation (in milliseconds)
+		timeouts.ReadTotalTimeoutConstant   = rxUs/1000;// Total timeout for a read operation (in milliseconds)
 		timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
-		timeouts.WriteTotalTimeoutConstant  = 50; // in milliseconds
+		timeouts.WriteTotalTimeoutConstant  = txUs/1000; // in milliseconds
 		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
 		result = SetCommTimeouts(m_fd, &timeouts);
 		if(!result)
