@@ -185,19 +185,9 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 			return false;
 		}
 		// Set timeouts
-		COMMTIMEOUTS timeouts;
-		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
-		timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
-		timeouts.ReadTotalTimeoutConstant   = rxUs/1000;// Total timeout for a read operation (in milliseconds)
-		timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
-		timeouts.WriteTotalTimeoutConstant  = txUs/1000; // in milliseconds
-		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
-		result = SetCommTimeouts(m_fd, &timeouts);
-		if(!result)
-		{
-			LogError("Could not set timeouts for COM port %s\n", win32_portname.c_str());
+
+		if(!SetTimeouts(txUs,rxUs))
 			return false;
-		}
 
 		return true;
 	#else
@@ -274,6 +264,46 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 
 	return true;
 }
+
+/**
+	@brief Sets timeouts on a UART that is open
+
+	@param txUs			Transmit timeout in microseconds (default 50,000 = 50 milliseconds)
+	@param rxUs			Recieve timeout in microseconds (default 500,000 = 500 milliseconds)
+
+	//TODO timeouts only implemented for WIN32
+ */
+bool UART::SetTimeouts(unsigned int txUs,unsigned int rxUs)
+{
+	#ifdef WIN32
+		// check if the file handle is open before attempting to use it
+		if(IsValid()){
+			COMMTIMEOUTS timeouts;
+			SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
+			timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
+			timeouts.ReadTotalTimeoutConstant   = rxUs/1000;// Total timeout for a read operation (in milliseconds)
+			timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
+			timeouts.WriteTotalTimeoutConstant  = txUs/1000; // in milliseconds
+			timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
+			bool result = SetCommTimeouts(m_fd, &timeouts);
+			if(!result)
+			{
+				LogError("Could not set timeouts for COM port\n");
+				return false;
+			}
+		}else{
+			LogError("Did not set timeouts on UART that is not open\n");
+		}
+
+	#else
+		LogError("UART::SetTimeouts is unimplemented on non-Windows platforms\n");
+		return true;
+	#endif
+	
+	return true;
+
+}
+
 
 /**
 	@brief Disconnects from the serial port
