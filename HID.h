@@ -68,25 +68,22 @@ public:
 	int Read(unsigned char* data, int len);
 	int Write(const unsigned char* data, int len);
 
-	hid_device* GetHandle()
+	hid_device* GetHandle() const
 	{ return m_handle; }
 
-	std::string GetManufacturerName()
+	const std::string& GetManufacturerName() const
 	{ return m_manufacturerName; }
 
-	std::string GetProductName()
+	const std::string& GetProductName() const
 	{ return m_productName; }
 
-	std::string GetSerialNumber()
+	const std::string& GetSerialNumber() const
 	{ return m_serialNumber; }
 
 	bool IsValid() const
-	{
-		return (m_handle != NULL);
-	}
+	{ return (m_handle != nullptr); }
 
-static std::vector<HidDeviceDescriptor> EnumerateDevices();
-
+	static std::vector<HidDeviceDescriptor> EnumerateDevices();
 
 protected:
 	hid_device* m_handle;
