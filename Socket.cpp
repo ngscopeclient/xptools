@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL                                                                                                           *
+* xptools                                                                                                              *
 *                                                                                                                      *
-* Copyright (c) 2012-2025 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2026 Andrew D. Zonenberg and contributors                                                         *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -367,14 +367,14 @@ void Socket::FlushRxBuffer(void)
 
 bool Socket::SetTxBuffer(int bufsize)
 {
-	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_SNDBUF, (char*)&bufsize, sizeof(bufsize)))
+	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&bufsize), sizeof(bufsize)))
 		return false;
 	return true;
 }
 
 bool Socket::SetRxBuffer(int bufsize)
 {
-	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(bufsize)))
+	if(0 != setsockopt((int)m_socket, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&bufsize), sizeof(bufsize)))
 		return false;
 	return true;
 }
@@ -596,7 +596,7 @@ bool Socket::RecvPascalString(string& str)
 bool Socket::DisableNagle()
 {
 	int flag = 1;
-	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag)))
+	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&flag), sizeof(flag)))
 		return false;
 
 	return true;
@@ -611,7 +611,7 @@ bool Socket::DisableDelayedACK()
 {
 #ifdef TCP_QUICKACK
 	int flag = 1;
-	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_QUICKACK, (char*)&flag, sizeof(flag)))
+	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_QUICKACK, reinterpret_cast<char*>(&flag), sizeof(flag)))
 		return false;
 #endif
 
@@ -629,7 +629,7 @@ bool Socket::DisableDelayedACK()
 bool Socket::SetReuseaddr(bool on)
 {
 	int flag = on;
-    if (0 != setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag)))
+    if (0 != setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&flag), sizeof(flag)))
         return false;
     return true;
 }
@@ -639,7 +639,7 @@ bool Socket::SetRxTimeout(unsigned int microSeconds)
 #ifdef _WIN32
 	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
 	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
-	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(DWORD)))
+	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&timeout), sizeof(DWORD)))
 		return false;
 #else
 	struct timeval tv;
@@ -659,7 +659,7 @@ bool Socket::SetTxTimeout(unsigned int microSeconds)
 #ifdef _WIN32
 	// WinSock2 expects a DWORD here, that contains the timeout in milliseconds.
 	DWORD timeout = (DWORD)(ceil((float)microSeconds / 1000.0f));
-	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(DWORD)))
+	if(0 != setsockopt((ZSOCKET)m_socket, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&timeout), sizeof(DWORD)))
 		return false;
 #else
 	struct timeval tv;
