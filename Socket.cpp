@@ -129,8 +129,12 @@ void Socket::Close()
 
 	@return true on success, false on fail
  */
-bool Socket::Connect(const std::string& host, uint16_t port)
+bool Socket::Connect(const string& host, uint16_t port)
 {
+	//Don't try to connect if socket creation failed
+	if(!IsValid())
+		return false;
+
 	addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;	//allow both v4 and v6
@@ -146,9 +150,9 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 
 #ifdef _WIN32
 	//Do a DNS lookup
-	ADDRINFO* address = NULL;
+	ADDRINFO* address = nullptr;
 #else
-	addrinfo* address = NULL;
+	addrinfo* address = nullptr;
 #endif
 
 	if(0 != (getaddrinfo(host.c_str(), sport, &hints, &address)))
@@ -156,7 +160,7 @@ bool Socket::Connect(const std::string& host, uint16_t port)
 		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
 	}
-	if(address == NULL)
+	if(address == nullptr)
 	{
 		LogWarning("DNS lookup for %s failed\n", host.c_str());
 		return false;
@@ -560,7 +564,7 @@ bool Socket::SendPascalString(const std::string& str)
 	}
 
 	uint32_t len = str.length();
-	if(!SendLooped((unsigned char*)&len, 4))
+	if(!SendLooped(reinterpret_cast<unsigned char*>(&len), 4))
 		return false;
 	if(!SendLooped((unsigned char*)str.c_str(), len))
 		return false;
@@ -578,9 +582,11 @@ bool Socket::RecvPascalString(string& str)
 	uint32_t len;
 	if(!RecvLooped((unsigned char*)&len, 4))
 		return false;
+
 	int64_t tlen = static_cast<int64_t>(len) + 1;	 //use larger int to avoid risk of overflow if str len == 4GB
+
 	char* rbuf = new char[tlen];
-	bool err = RecvLooped((unsigned char*)rbuf, len);
+	bool err = RecvLooped(reinterpret_cast<unsigned char*>(rbuf), len);
 	rbuf[len] = 0;				//null terminate the string
 	str = string(rbuf, len);	//use sequence constructor since buffer may have embedded nulls
 	delete[] rbuf;
