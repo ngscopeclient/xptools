@@ -168,7 +168,7 @@ bool Socket::Connect(const string& host, uint16_t port)
 
 	//Try actually connecting
 	bool connected = false;
-	for(addrinfo* p = address; p != NULL; p = p->ai_next)
+	for(addrinfo* p = address; p != nullptr; p = p->ai_next)
 	{
 		m_af = p->ai_family;
 		m_protocol = p->ai_protocol;
@@ -580,7 +580,7 @@ bool Socket::SendPascalString(const std::string& str)
 bool Socket::RecvPascalString(string& str)
 {
 	uint32_t len;
-	if(!RecvLooped((unsigned char*)&len, 4))
+	if(!RecvLooped(reinterpret_cast<unsigned char*>(&len), 4))
 		return false;
 
 	int64_t tlen = static_cast<int64_t>(len) + 1;	 //use larger int to avoid risk of overflow if str len == 4GB
