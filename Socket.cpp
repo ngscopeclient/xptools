@@ -175,6 +175,10 @@ bool Socket::Connect(const string& host, uint16_t port)
 		Close();
 		Open();
 
+		//Bail out if socket creation failed
+		if(!IsValid())
+			continue;
+
 		//Connect to the socket
 		if(0 == connect(m_socket, p->ai_addr, p->ai_addrlen))
 		{
