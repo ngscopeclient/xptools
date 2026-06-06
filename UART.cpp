@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * xptools                                                                                                              *
 *                                                                                                                      *
-* Copyright (c) 2012-2025 Andrew D. Zonenberg and contributors                                                         *
+* Copyright (c) 2012-2026 Andrew D. Zonenberg and contributors                                                         *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -111,7 +111,12 @@ UART::~UART() {
 
 	//TODO timeouts only implemented for WIN32
  */
-bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable, [[maybe_unused]]unsigned int txUs,[[maybe_unused]]unsigned int rxUs)
+bool UART::Connect(
+	const string& devfile,
+	int baud,
+	[[maybe_unused]] bool dtrEnable,
+	[[maybe_unused]] unsigned int txUs,
+	[[maybe_unused]]unsigned int rxUs)
 {
 	if(devfile.find(":") != string::npos)
 	{
@@ -133,18 +138,22 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		// Specify the COM port name using \\.\COM10
 		// this is needed for COM10 and above on windows
 		// note the escape character is also backslash
-		if(devfile.find("COM")==0){
+		if(devfile.find("COM")==0)
+		{
 			// pre-append "\\.\"
 			win32_portname = R"(\\.\)" + devfile;
-		}else if(devfile.find(R"(\\.\COM)")==0){
+		}
+		else if(devfile.find(R"(\\.\COM)")==0)
+		{
 			// the "\\.\"" is already there
 			win32_portname = devfile;
-		}else{
+		}
+		else
+		{
 			// the name of the COM port is not valid
 			LogError("COM port name %s invalid, expected COM1 or \\\\.\\COM1\n",devfile.c_str());
 			return false;
 		}
-
 
 		m_fd = CreateFileA(win32_portname.c_str(),			  // port name
 							GENERIC_READ | GENERIC_WRITE, // Read/Write
@@ -273,11 +282,12 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 
 	//TODO timeouts only implemented for WIN32
  */
-bool UART::SetTimeouts(unsigned int txUs,unsigned int rxUs)
+bool UART::SetTimeouts([[maybe_unused]] unsigned int txUs, [[maybe_unused]] unsigned int rxUs)
 {
 	#ifdef WIN32
 		// check if the file handle is open before attempting to use it
-		if(IsValid()){
+		if(IsValid())
+		{
 			COMMTIMEOUTS timeouts;
 			SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
 			timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
@@ -291,7 +301,9 @@ bool UART::SetTimeouts(unsigned int txUs,unsigned int rxUs)
 				LogError("Could not set timeouts for COM port\n");
 				return false;
 			}
-		}else{
+		}
+		else
+		{
 			LogError("Did not set timeouts on UART that is not open\n");
 		}
 
@@ -299,9 +311,8 @@ bool UART::SetTimeouts(unsigned int txUs,unsigned int rxUs)
 		LogError("UART::SetTimeouts is unimplemented on non-Windows platforms\n");
 		return true;
 	#endif
-	
-	return true;
 
+	return true;
 }
 
 
