@@ -106,8 +106,12 @@ UART::~UART() {
 	@param devfile 		The device file
 	@param baud			Baud rate to use (in bits per second)
 	@param dtrEnable	True if DTR line should be enabled (needed by some devices like the NanoVNA to communicate)
+	@param txUs			Transmit timeout in microseconds (default 50,000 = 50 milliseconds)
+	@param rxUs			Recieve timeout in microseconds (default 500,000 = 500 milliseconds)
+
+	//TODO timeouts only implemented for WIN32
  */
-bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable)
+bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool dtrEnable, [[maybe_unused]]unsigned int txUs,[[maybe_unused]]unsigned int rxUs)
 {
 	if(devfile.find(":") != string::npos)
 	{
@@ -124,7 +128,25 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 	else
 	{
 	#ifdef _WIN32
-		m_fd = CreateFileA(devfile.c_str(),			  // port name
+		string win32_portname;
+
+		// Specify the COM port name using \\.\COM10
+		// this is needed for COM10 and above on windows
+		// note the escape character is also backslash
+		if(devfile.find("COM")==0){
+			// pre-append "\\.\"
+			win32_portname = R"(\\.\)" + devfile;
+		}else if(devfile.find(R"(\\.\COM)")==0){
+			// the "\\.\"" is already there
+			win32_portname = devfile;
+		}else{
+			// the name of the COM port is not valid
+			LogError("COM port name %s invalid, expected COM1 or \\\\.\\COM1\n",devfile.c_str());
+			return false;
+		}
+
+
+		m_fd = CreateFileA(win32_portname.c_str(),			  // port name
 							GENERIC_READ | GENERIC_WRITE, // Read/Write
 							0,                            // No Sharing
 							NULL,                         // No Security
@@ -134,7 +156,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 
 		if (m_fd == INVALID_HANDLE_VALUE)
 		{
-			LogError("Could not open COM port %s\n", devfile.c_str());
+			LogError("Could not open COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Configure port
@@ -145,7 +167,7 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		bool result = GetCommState(m_fd, &dcbSerialParams);
 		if(!result)
 		{
-			LogError("Could not get state for COM port %s\n", devfile.c_str());
+			LogError("Could not get state for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Set values
@@ -159,23 +181,13 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 		result = SetCommState(m_fd, &dcbSerialParams);
 		if(!result)
 		{
-			LogError("Could not set state for COM port %s\n", devfile.c_str());
+			LogError("Could not set state for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
 		// Set timeouts
-		COMMTIMEOUTS timeouts;
-		SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
-		timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
-		timeouts.ReadTotalTimeoutConstant   = 500;// Total timeout for a read operation (in milliseconds)
-		timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
-		timeouts.WriteTotalTimeoutConstant  = 50; // in milliseconds
-		timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
-		result = SetCommTimeouts(m_fd, &timeouts);
-		if(!result)
-		{
-			LogError("Could not set timeouts for COM port %s\n", devfile.c_str());
+
+		if(!SetTimeouts(txUs,rxUs))
 			return false;
-		}
 
 		return true;
 	#else
@@ -252,6 +264,46 @@ bool UART::Connect(const std::string& devfile, int baud, [[maybe_unused]] bool d
 
 	return true;
 }
+
+/**
+	@brief Sets timeouts on a UART that is open
+
+	@param txUs			Transmit timeout in microseconds (default 50,000 = 50 milliseconds)
+	@param rxUs			Recieve timeout in microseconds (default 500,000 = 500 milliseconds)
+
+	//TODO timeouts only implemented for WIN32
+ */
+bool UART::SetTimeouts(unsigned int txUs,unsigned int rxUs)
+{
+	#ifdef WIN32
+		// check if the file handle is open before attempting to use it
+		if(IsValid()){
+			COMMTIMEOUTS timeouts;
+			SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
+			timeouts.ReadIntervalTimeout        = 50; // Timeout between each byte (in milliseconds)
+			timeouts.ReadTotalTimeoutConstant   = rxUs/1000;// Total timeout for a read operation (in milliseconds)
+			timeouts.ReadTotalTimeoutMultiplier = 1;  // Multiplier for each byte
+			timeouts.WriteTotalTimeoutConstant  = txUs/1000; // in milliseconds
+			timeouts.WriteTotalTimeoutMultiplier = 10;// in milliseconds
+			bool result = SetCommTimeouts(m_fd, &timeouts);
+			if(!result)
+			{
+				LogError("Could not set timeouts for COM port\n");
+				return false;
+			}
+		}else{
+			LogError("Did not set timeouts on UART that is not open\n");
+		}
+
+	#else
+		LogError("UART::SetTimeouts is unimplemented on non-Windows platforms\n");
+		return true;
+	#endif
+	
+	return true;
+
+}
+
 
 /**
 	@brief Disconnects from the serial port

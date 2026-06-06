@@ -67,7 +67,8 @@ public:
 
 	UART();
 	UART(const std::string& devfile, int baud);
-	bool Connect(const std::string& devfile, int baud, bool dtrEnable = false);
+	bool Connect(const std::string& devfile, int baud, bool dtrEnable = false,unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
+	bool SetTimeouts(unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
 	void Close();
 	virtual ~UART();
 
