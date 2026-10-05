@@ -548,13 +548,32 @@ std::vector<UartDescriptor> UART::EnumerateUarts()
     }
     SetupDiDestroyDeviceInfoList(deviceInfoSet);
 #else
-    for (const auto& entry : std::filesystem::directory_iterator("/dev/serial/by-id"))
+    if (std::filesystem::is_directory("/dev/serial/by-id"))
     {
-        UartDescriptor info;
-        info.description = entry.path().filename().string();
-        info.port = std::filesystem::read_symlink(entry.path()).string();
-        ports.push_back(info);
+        for (const auto& entry : std::filesystem::directory_iterator("/dev/serial/by-id"))
+        {
+            UartDescriptor info;
+            info.description = entry.path().filename().string();
+            info.port = std::filesystem::read_symlink(entry.path()).string();
+            ports.push_back(info);
+        }
     }
+    else
+    {
+        for (const auto& entry : std::filesystem::directory_iterator("/dev"))
+        {
+            string fn = entry.path().filename().string();
+            if (fn == "tty" || fn.find("tty") != 0)
+            {
+                continue;
+            }
+            UartDescriptor info;
+            info.description = entry.path().filename().string();
+            info.port = entry.path().string();
+            ports.push_back(info);
+        }
+    }
+
 #endif
     return ports;
 }
