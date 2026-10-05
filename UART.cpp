@@ -201,7 +201,7 @@ bool UART::Connect(
 	#else
 		//Open the UART
 		//LogTrace("Opening TTY %s\n", devfile.c_str());
-		m_fd = open(devfile.c_str(), O_RDWR);
+		m_fd = open(devfile.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
 		if(m_fd < 0)
 		{
 			LogError("Could not open UART file %s\n", devfile.c_str());
