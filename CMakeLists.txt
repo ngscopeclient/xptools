@@ -2,6 +2,7 @@ add_library(xptools STATIC
 	Socket.cpp
 	UART.cpp
 	HID.cpp
+	Deadline.cpp
 	TimeUtil.cpp
 	StringUtil.cpp)
 

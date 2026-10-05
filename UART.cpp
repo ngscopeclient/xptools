@@ -34,12 +34,17 @@
  */
 
 #include "UART.h"
+#include "Deadline.h"
 #include <stdio.h>
 #include <memory.h>
 
 #ifndef _WIN32
+#include <math.h>
+#include <errno.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/select.h>
 #include <filesystem>
 
 #ifdef USE_TERMIOS2
@@ -115,8 +120,8 @@ bool UART::Connect(
 	const string& devfile,
 	int baud,
 	[[maybe_unused]] bool dtrEnable,
-	[[maybe_unused]] unsigned int txUs,
-	[[maybe_unused]]unsigned int rxUs)
+	unsigned int txUs,
+	unsigned int rxUs)
 {
 	if(devfile.find(":") != string::npos)
 	{
@@ -193,12 +198,6 @@ bool UART::Connect(
 			LogError("Could not set state for COM port %s\n", win32_portname.c_str());
 			return false;
 		}
-		// Set timeouts
-
-		if(!SetTimeouts(txUs,rxUs))
-			return false;
-
-		return true;
 	#else
 		//Open the UART
 		//LogTrace("Opening TTY %s\n", devfile.c_str());
@@ -271,6 +270,11 @@ bool UART::Connect(
 	#endif
 	}
 
+	// Set timeouts
+
+	if(!SetTimeouts(txUs,rxUs))
+		return false;
+
 	return true;
 }
 
@@ -282,7 +286,7 @@ bool UART::Connect(
 
 	//TODO timeouts only implemented for WIN32
  */
-bool UART::SetTimeouts([[maybe_unused]] unsigned int txUs, [[maybe_unused]] unsigned int rxUs)
+bool UART::SetTimeouts(unsigned int txUs, unsigned int rxUs)
 {
 	#ifdef WIN32
 		// check if the file handle is open before attempting to use it
@@ -308,8 +312,8 @@ bool UART::SetTimeouts([[maybe_unused]] unsigned int txUs, [[maybe_unused]] unsi
 		}
 
 	#else
-		LogError("UART::SetTimeouts is unimplemented on non-Windows platforms\n");
-		return true;
+		m_txTimeout = txUs;
+		m_rxTimeout = rxUs;
 	#endif
 
 	return true;
@@ -371,27 +375,51 @@ bool UART::Read(unsigned char* data, int len)
 
 			return true;
 		#else
-			int x = 0;
-			while( (x = read(m_fd, (char*)data, len)) > 0)
+			Deadline deadline{m_rxTimeout * 1000ull};
+			deadline.Start();
+
+			while(len > 0)
 			{
+				uint64_t remaining = deadline.GetRemaining();
+				if (remaining == 0)
+					break;
+				struct timeval timeout =
+				{
+					.tv_sec = static_cast<time_t>(remaining / Deadline::SECONDS_PER_NS),
+					.tv_usec = static_cast<suseconds_t>(ceil((remaining % Deadline::SECONDS_PER_NS) / 1000ull)),
+				};
+
+				//Wait for available read
+				fd_set fs;
+				FD_ZERO(&fs);
+				FD_SET(m_fd, &fs);
+				int x = select(m_fd + 1, &fs, nullptr, nullptr, &timeout);
+				if(x < 0)
+				{
+					if (errno == EINTR || errno == EAGAIN)
+						continue;
+					LogWarning("UART select failed: %s\n", strerror(errno));
+					return false;
+				}
+				//Deadline elapsed
+				if(x == 0)
+					break;
+
+				//Read
+				x = read(m_fd, (char*)data, len);
+				if(x < 0)
+				{
+					LogWarning("UART read failed: %s\n", strerror(errno));
+					return false;
+				}
+				//EOF
+				if(x == 0)
+					break;
 				len -= x;
 				data += x;
-				if(len == 0)
-					break;
 			}
 
-			if(x < 0)
-			{
-				LogWarning("UART read failed\n");
-				return false;
-			}
-			else if(x == 0)
-			{
-				//LogWarning("Socket closed unexpectedly\n");
-				return false;
-			}
-
-			return true;
+			return len == 0;
 		#endif
 	}
 }
@@ -424,27 +452,51 @@ bool UART::Write(const unsigned char* data, int len)
 
 			return true;
 		#else
-			int x = 0;
-			while( (x = write(m_fd, (const char*)data, len)) > 0)
+			Deadline deadline{m_txTimeout * 1000ull};
+			deadline.Start();
+
+			while(len > 0)
 			{
+				uint64_t remaining = deadline.GetRemaining();
+				if (remaining == 0)
+					break;
+				struct timeval timeout =
+				{
+					.tv_sec = static_cast<time_t>(remaining / Deadline::SECONDS_PER_NS),
+					.tv_usec = static_cast<suseconds_t>(ceil((remaining % Deadline::SECONDS_PER_NS) / 1000ull)),
+				};
+
+				//Wait for available write
+				fd_set fs;
+				FD_ZERO(&fs);
+				FD_SET(m_fd, &fs);
+				int x = select(m_fd + 1, nullptr, &fs, nullptr, &timeout);
+				if(x < 0)
+				{
+					if (errno == EINTR || errno == EAGAIN)
+						continue;
+					LogWarning("UART select failed: %s\n", strerror(errno));
+					return false;
+				}
+				//Deadline elapsed
+				if(x == 0)
+					break;
+
+				//Write
+				x = write(m_fd, (const char*)data, len);
+				if(x < 0)
+				{
+					LogWarning("UART write failed: %s\n", strerror(errno));
+					return false;
+				}
+				//EOF
+				if(x == 0)
+					break;
 				len -= x;
 				data += x;
-				if(len == 0)
-					break;
 			}
 
-			if(x < 0)
-			{
-				LogWarning("UART write failed\n");
-				return false;
-			}
-			else if(x == 0)
-			{
-				//LogWarning("Socket closed unexpectedly\n");
-				return false;
-			}
-
-			return true;
+			return len == 0;
 		#endif
 	}
 }
