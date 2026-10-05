@@ -119,7 +119,7 @@ UART::~UART() {
 bool UART::Connect(
 	const string& devfile,
 	int baud,
-	[[maybe_unused]] bool dtrEnable,
+	bool dtrEnable,
 	unsigned int txUs,
 	unsigned int rxUs)
 {
@@ -249,6 +249,15 @@ bool UART::Connect(
 		{
 			LogError("Fail to set attr\n");
 			return false;
+		}
+		if (dtrEnable)
+		{
+			int flag = TIOCM_DTR;
+			if(0 != ioctl(m_fd, TIOCMBIS, &flag))
+			{
+				LogError("Failed to set DTR\n");
+				return false;
+			}
 		}
 #endif
 		/*
