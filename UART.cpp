@@ -330,8 +330,11 @@ bool UART::SetTimeouts(unsigned int txUs, unsigned int rxUs)
 
 void UART::FlushRxBuffer()
 {
+	if (m_networked)
+		return m_socket.FlushRxBuffer();
+
 	#ifdef _WIN32
-		LogError("UART::FlushRxBuffer not implemented for Win32 yet\n");
+		PurgeComm(m_fd, PURGE_RXCLEAR);
 	#else
 		tcflush(m_fd, TCIFLUSH);
 	#endif
