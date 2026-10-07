@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* xptools                                                                                                              *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2026 Shiz <hi@shiz.me>                                                                                 *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -28,76 +28,90 @@
 ***********************************************************************************************************************/
 
 /**
-	@file
-	@author Andrew D. Zonenberg
-	@brief Declaration of UART
+	@file Deadline.cpp
+	@brief Implementation of Deadline class
  */
 
-#ifndef UART_h
-#define UART_h
+#include "Deadline.h"
 
-#include "../log/log.h"
-#include <string>
-#include "Socket.h"
+using namespace std;
+
 
 #ifdef _WIN32
+static double ticksPerNs;
 
-typedef HANDLE FILE_DESCRIPTOR;
-#define INVALID_FILE_DESCRIPTOR INVALID_HANDLE_VALUE
-
-#else
-
-typedef int FILE_DESCRIPTOR;
-#define INVALID_FILE_DESCRIPTOR -1
-
-#endif
-
-struct UartDescriptor
+static void GetTime(LARGE_INTEGER *t)
 {
-    std::string port;        // ex: "COM3"
-    std::string description; // ex: "USB-SERIAL CH340"
-};
+	QueryPerformanceCounter(t);
+}
 
-/**
-	@brief Wrapper class for a serial port
- */
-class UART
+static uint64_t GetTimeDiff(const LARGE_INTEGER *start, const LARGE_INTEGER *now)
 {
-public:
-
-	UART();
-	UART(const std::string& devfile, int baud);
-	bool Connect(const std::string& devfile, int baud, bool dtrEnable = false,unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
-	bool SetTimeouts(unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
-	void Close();
-	virtual ~UART();
-
-	bool Read(unsigned char* data, int len);
-	bool Write(const unsigned char* data, int len);
-
-	void FlushRxBuffer();
-
-	FILE_DESCRIPTOR GetHandle()
-	{ return m_fd; }
-
-	bool IsValid() const
+	if (ticksPerNs == 0)
 	{
-		if (m_networked)
-			return m_socket.IsValid();
-
-		return (m_fd != INVALID_FILE_DESCRIPTOR);
+		LARGE_INTEGER freq;
+		QueryPerformanceFrequency(&freq);
+		ticksPerNs = 1e9 / static_cast<double>(freq.QuadPart);
 	}
 
-static std::vector<UartDescriptor> EnumerateUarts();
-
-protected:
-	bool m_networked;
-	FILE_DESCRIPTOR m_fd;
-	Socket m_socket;
-#ifndef _WIN32
-	unsigned int m_txTimeout;
-	unsigned int m_rxTimeout;
+	uint64_t ticks = now->QuadPart - start->QuadPart;
+	return static_cast<uint64_t>(ticks / ticksPerNs);
+}
+#else
+/* Not all systems define CLOCK_MONOTONIC_RAW, fallback to CLOCK_MONOTONIC in that case */
+#ifndef CLOCK_MONOTONIC_RAW
+#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
 #endif
-};
 
+static void GetTime(struct timespec *t)
+{
+	clock_gettime(CLOCK_MONOTONIC_RAW, t);
+}
+
+static uint64_t GetTimeDiff(const struct timespec *start, const struct timespec *now)
+{
+	time_t secs = now->tv_sec - start->tv_sec;
+	uint64_t nsecs;
+	if (now->tv_nsec < start->tv_nsec)
+	{
+		secs--;
+		nsecs = static_cast<uint64_t>(Deadline::SECONDS_PER_NS - start->tv_nsec + now->tv_nsec);
+	}
+	else
+	{
+		nsecs = static_cast<uint64_t>(now->tv_nsec - start->tv_nsec);
+	}
+	if (secs < 0)
+		return 0;
+	return static_cast<uint64_t>(secs) * Deadline::SECONDS_PER_NS + nsecs;
+}
 #endif
+
+
+/**
+	@brief Creates a deadline
+
+	@param duration_ns Deadline duration in nanoseconds
+ */
+Deadline::Deadline(uint64_t duration_ns)
+	: duration(duration_ns)
+{
+}
+
+void Deadline::Start(void)
+{
+	GetTime(&startTime);
+}
+
+uint64_t Deadline::GetElapsed(void) const
+{
+	Instant now;
+	GetTime(&now);
+	return GetTimeDiff(&startTime, &now);
+}
+
+uint64_t Deadline::GetRemaining(void) const
+{
+	uint64_t elapsed = GetElapsed();
+	return (elapsed > duration) ? 0 : (duration - elapsed);
+}

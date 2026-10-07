@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL v0.1                                                                                                      *
+* xptools                                                                                                              *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2026 Shiz <hi@shiz.me>                                                                                 *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -28,76 +28,49 @@
 ***********************************************************************************************************************/
 
 /**
-	@file
-	@author Andrew D. Zonenberg
-	@brief Declaration of UART
+	@file Deadline.h
+	@brief Declaration of Deadline class
  */
+#ifndef Deadline_h
+#define Deadline_h
 
-#ifndef UART_h
-#define UART_h
+#include <cstdint>
 
-#include "../log/log.h"
-#include <string>
-#include "Socket.h"
-
-#ifdef _WIN32
-
-typedef HANDLE FILE_DESCRIPTOR;
-#define INVALID_FILE_DESCRIPTOR INVALID_HANDLE_VALUE
-
+#ifndef _WIN32
+#include <ctime>
 #else
-
-typedef int FILE_DESCRIPTOR;
-#define INVALID_FILE_DESCRIPTOR -1
-
+#include <windows.h>
 #endif
-
-struct UartDescriptor
-{
-    std::string port;        // ex: "COM3"
-    std::string description; // ex: "USB-SERIAL CH340"
-};
 
 /**
-	@brief Wrapper class for a serial port
+	@brief Class representing a timer deadline
  */
-class UART
+class Deadline
 {
 public:
+	static const uint64_t SECONDS_PER_NS = 1000000000ull;
 
-	UART();
-	UART(const std::string& devfile, int baud);
-	bool Connect(const std::string& devfile, int baud, bool dtrEnable = false,unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
-	bool SetTimeouts(unsigned int txUs = 1000*50,unsigned int rxUs = 1000*500);
-	void Close();
-	virtual ~UART();
+	Deadline(uint64_t duration_ns);
+	~Deadline() = default;
 
-	bool Read(unsigned char* data, int len);
-	bool Write(const unsigned char* data, int len);
-
-	void FlushRxBuffer();
-
-	FILE_DESCRIPTOR GetHandle()
-	{ return m_fd; }
-
-	bool IsValid() const
-	{
-		if (m_networked)
-			return m_socket.IsValid();
-
-		return (m_fd != INVALID_FILE_DESCRIPTOR);
-	}
-
-static std::vector<UartDescriptor> EnumerateUarts();
+	//Start deadline timer
+	void Start(void);
+	//Return amount of elapsed nanoseconds
+	uint64_t GetElapsed(void) const;
+	//Return amount of remaining nanoseconds
+	uint64_t GetRemaining(void) const;
+	//Return whether deadline has elapsed
+	bool HasElapsed(void) const { return GetRemaining() == 0; }
 
 protected:
-	bool m_networked;
-	FILE_DESCRIPTOR m_fd;
-	Socket m_socket;
-#ifndef _WIN32
-	unsigned int m_txTimeout;
-	unsigned int m_rxTimeout;
+#ifdef _WIN32
+	typedef LARGE_INTEGER Instant;
+#else
+	typedef struct timespec Instant;
 #endif
+
+	uint64_t duration;
+	Instant startTime;
 };
 
 #endif
